@@ -161,3 +161,42 @@ let n=12;
 console.log(n); //12
 ```
 
+
+
+不管条件是否成立，都要进行变量提升。
+
+```javascript
+//var a;全局声明a相当于window.a  
+if(!("a" in window)){//true
+    var a = 1;
+}
+console.log(a);  //undefined
+```
+
+
+
+```javascript
+/*
+	arguments时函数内置的实参集合，箭头函数中没有arguments，不管是否定义了形参，也不管传递了多少实参，arguments中包含所有传递的实参信息（类数组集合）
+*/
+var a = 4;
+function b(x,y,a){
+    //在js非严格模式下，arguments和形参存在映射关系（一个改都会跟着改）
+    //console.log(arguments);   //{0:1,1:2,2:3,length:3...}
+    console.log(a); //3
+    arguments[2] = 10;//把传递的第三个实参修改为10，形参也跟着改为10
+    console.log(a);//10
+}
+a = b(1,2,3);  //a=b的执行结果，无return 也就是a=undefined
+console.log(a);//undefined
+
+
+//严格模式下，arguments和形参的映射机制就切断了
+"use strict";
+function b(x,y,a){
+    arguments[2] = 10;
+    console.log(a);//3
+}
+b(1,2,3); 
+```
+
