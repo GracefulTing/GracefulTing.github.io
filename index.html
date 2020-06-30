@@ -1,276 +1,153 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"><meta name="author" content="GracefulTing"><meta name="renderer" content="webkit"><meta name="copyright" content="GracefulTing"><meta name="keywords" content="Welcome to GracefulTing's blog"><meta name="description" content=""><meta name="Cache-Control" content="no-cache"><meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"><title>GracefulTing's Blog</title><link rel="stylesheet" href="/css/style.css?v=2018.7.9"><link rel="stylesheet" href="/css/animation.css?v=2018.7.9"><link rel="icon" href="/img/assets/favicon.ico"><link rel="stylesheet" href="https://cdn.bootcss.com/font-awesome/4.7.0/css/font-awesome.min.css?version=1.5.6"><!-- scripts--><script>(function( w ){
+  "use strict";
+  // rel=preload support test
+  if( !w.loadCSS ){
+    w.loadCSS = function(){};
+  }
+  // define on the loadCSS obj
+  var rp = loadCSS.relpreload = {};
+  // rel=preload feature support test
+  // runs once and returns a function for compat purposes
+  rp.support = (function(){
+    var ret;
+    try {
+      ret = w.document.createElement( "link" ).relList.supports( "preload" );
+    } catch (e) {
+      ret = false;
+    }
+    return function(){
+      return ret;
+    };
+  })();
 
-  
-  <title>Welcome to GracefulTing&#39;s blog</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta property="og:type" content="website">
-<meta property="og:title" content="Welcome to GracefulTing&#39;s blog">
-<meta property="og:url" content="http://yoursite.com/index.html">
-<meta property="og:site_name" content="Welcome to GracefulTing&#39;s blog">
-<meta property="og:locale" content="en_US">
-<meta property="article:author" content="John Doe">
-<meta name="twitter:card" content="summary">
-  
-    <link rel="alternate" href="/atom.xml" title="Welcome to GracefulTing&#39;s blog" type="application/atom+xml">
-  
-  
-    <link rel="icon" href="/favicon.png">
-  
-  
-    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
-  
-  
-<link rel="stylesheet" href="/css/style.css">
+  // if preload isn't supported, get an asynchronous load by using a non-matching media attribute
+  // then change that media back to its intended value on load
+  rp.bindMediaToggle = function( link ){
+    // remember existing media attr for ultimate state, or default to 'all'
+    var finalMedia = link.media || "all";
 
-<meta name="generator" content="Hexo 4.2.1"></head>
+    function enableStylesheet(){
+      link.media = finalMedia;
+    }
 
-<body>
-  <div id="container">
-    <div id="wrap">
-      <header id="header">
-  <div id="banner"></div>
-  <div id="header-outer" class="outer">
-    <div id="header-title" class="inner">
-      <h1 id="logo-wrap">
-        <a href="/" id="logo">Welcome to GracefulTing&#39;s blog</a>
-      </h1>
-      
-    </div>
-    <div id="header-inner" class="inner">
-      <nav id="main-nav">
-        <a id="main-nav-toggle" class="nav-icon"></a>
-        
-          <a class="main-nav-link" href="/">Home</a>
-        
-          <a class="main-nav-link" href="/archives">Archives</a>
-        
-      </nav>
-      <nav id="sub-nav">
-        
-          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
-        
-        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
-      </nav>
-      <div id="search-form-wrap">
-        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://yoursite.com"></form>
-      </div>
-    </div>
-  </div>
-</header>
-      <div class="outer">
-        <section id="main">
-  
-    <article id="post-test" class="article article-type-post" itemscope itemprop="blogPost">
-  <div class="article-meta">
-    <a href="/2020/06/16/test/" class="article-date">
-  <time datetime="2020-06-16T15:40:52.336Z" itemprop="datePublished">2020-06-16</time>
-</a>
-    
-  </div>
-  <div class="article-inner">
-    
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2020/06/16/test/">TEST</a>
-    </h1>
-  
+    // bind load handlers to enable media
+    if( link.addEventListener ){
+      link.addEventListener( "load", enableStylesheet );
+    } else if( link.attachEvent ){
+      link.attachEvent( "onload", enableStylesheet );
+    }
 
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <h1 id="test"><a href="#test" class="headerlink" title="test"></a>test</h1><h3 id="111"><a href="#111" class="headerlink" title="111"></a>111</h3>
-      
-    </div>
-    <footer class="article-footer">
-      <a data-url="http://yoursite.com/2020/06/16/test/" data-id="ckbi40be800022svo12dlfaay" class="article-share-link">Share</a>
-      
-      
-    </footer>
-  </div>
-  
-</article>
+    // Set rel and non-applicable media type to start an async request
+    // note: timeout allows this to happen async to let rendering continue in IE
+    setTimeout(function(){
+      link.rel = "stylesheet";
+      link.media = "only x";
+    });
+    // also enable media after 3 seconds,
+    // which will catch very old browsers (android 2.x, old firefox) that don't support onload on link
+    setTimeout( enableStylesheet, 3000 );
+  };
+
+  // loop through link elements in DOM
+  rp.poly = function(){
+    // double check this to prevent external calls from running
+    if( rp.support() ){
+      return;
+    }
+    var links = w.document.getElementsByTagName( "link" );
+    for( var i = 0; i < links.length; i++ ){
+      var link = links[ i ];
+      // qualify links to those with rel=preload and as=style attrs
+      if( link.rel === "preload" && link.getAttribute( "as" ) === "style" && !link.getAttribute( "data-loadcss" ) ){
+        // prevent rerunning on link
+        link.setAttribute( "data-loadcss", true );
+        // bind listeners to toggle media back
+        rp.bindMediaToggle( link );
+      }
+    }
+  };
+
+  // if unsupported, run the polyfill
+  if( !rp.support() ){
+    // run once at least
+    rp.poly();
+
+    // rerun poly on an interval until onload
+    var run = w.setInterval( rp.poly, 500 );
+    if( w.addEventListener ){
+      w.addEventListener( "load", function(){
+        rp.poly();
+        w.clearInterval( run );
+      } );
+    } else if( w.attachEvent ){
+      w.attachEvent( "onload", function(){
+        rp.poly();
+        w.clearInterval( run );
+      } );
+    }
+  }
 
 
-  
-    <article id="post-hello-world" class="article article-type-post" itemscope itemprop="blogPost">
-  <div class="article-meta">
-    <a href="/2020/06/16/hello-world/" class="article-date">
-  <time datetime="2020-06-16T15:08:20.006Z" itemprop="datePublished">2020-06-16</time>
-</a>
-    
-  </div>
-  <div class="article-inner">
-    
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2020/06/16/hello-world/">Hello World</a>
-    </h1>
-  
-
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p>Welcome to <a href="https://hexo.io/" target="_blank" rel="noopener">Hexo</a>! This is your very first post. Check <a href="https://hexo.io/docs/" target="_blank" rel="noopener">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a href="https://hexo.io/docs/troubleshooting.html" target="_blank" rel="noopener">troubleshooting</a> or you can ask me on <a href="https://github.com/hexojs/hexo/issues" target="_blank" rel="noopener">GitHub</a>.</p>
-<h2 id="Quick-Start"><a href="#Quick-Start" class="headerlink" title="Quick Start"></a>Quick Start</h2><h3 id="Create-a-new-post"><a href="#Create-a-new-post" class="headerlink" title="Create a new post"></a>Create a new post</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo new <span class="string">"My New Post"</span></span><br></pre></td></tr></table></figure>
-
-<p>More info: <a href="https://hexo.io/docs/writing.html" target="_blank" rel="noopener">Writing</a></p>
-<h3 id="Run-server"><a href="#Run-server" class="headerlink" title="Run server"></a>Run server</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo server</span><br></pre></td></tr></table></figure>
-
-<p>More info: <a href="https://hexo.io/docs/server.html" target="_blank" rel="noopener">Server</a></p>
-<h3 id="Generate-static-files"><a href="#Generate-static-files" class="headerlink" title="Generate static files"></a>Generate static files</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo generate</span><br></pre></td></tr></table></figure>
-
-<p>More info: <a href="https://hexo.io/docs/generating.html" target="_blank" rel="noopener">Generating</a></p>
-<h3 id="Deploy-to-remote-sites"><a href="#Deploy-to-remote-sites" class="headerlink" title="Deploy to remote sites"></a>Deploy to remote sites</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo deploy</span><br></pre></td></tr></table></figure>
-
-<p>More info: <a href="https://hexo.io/docs/one-command-deployment.html" target="_blank" rel="noopener">Deployment</a></p>
-
-      
-    </div>
-    <footer class="article-footer">
-      <a data-url="http://yoursite.com/2020/06/16/hello-world/" data-id="ckbi40bdx00002svoetc71n1j" class="article-share-link">Share</a>
-      
-      
-    </footer>
-  </div>
-  
-</article>
+  // commonjs
+  if( typeof exports !== "undefined" ){
+    exports.loadCSS = loadCSS;
+  }
+  else {
+    w.loadCSS = loadCSS;
+  }
+}( typeof global !== "undefined" ? global : this ) );</script><script src="https://cdn.jsdelivr.net/npm/jquery@3.3.1/dist/jquery.min.js" defer></script><script src="/js/main.js?v=2018.7.9" defer></script><!-- fancybox--><link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.2.5/jquery.fancybox.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'"><script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.2.5/jquery.fancybox.min.js" defer></script><!-- busuanzi--><script async src="//dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script><meta name="generator" content="Hexo 4.2.1"></head><body><section class="profile-close" id="cxo-profile"><div class="profile-avatar"><i class="fa fa-caret-left"></i><img src="/img/assets/cat.png"></div><!--.profile-saying
+  i.fa.fa-comment
+  .saying--><div class="cxo-profile-inner"><div class="profile-name">Grace</div><div class="profile-signature">The harder, the more fortunate</div><div class="read-progress"></div></div></section><header id="cxo-intro" style="height: 70vh;background-image: url(/img/intro/index-bg.png);"><nav id="cxo-intro-nav"><section><div class="intro-nav-title"><a href="/">GracefulTing's Blog</a></div><div class="intro-nav-label-box"><a href="/">Home</a><a href="/about/">About</a><a href="/archives/">Archives</a><a href="/tags/">Tags</a></div><i class="fa fa-bars intro-nav-menu"><div class="intro-nav-drop"><a href="/">Home</a><a href="/about/">About</a><a href="/archives/">Archives</a><a href="/tags/">Tags</a></div></i><div class="clear"></div></section></nav><h1>GracefulTing's Blog</h1><h5>Welcome to my Blog!</h5><div class="intro-social"><a class="fa fa-github" href="//github.com/" target="_blank" title="github"></a><a class="fa fa-weibo" href="//www.weibo.com" target="_blank" title="weibo"></a><a class="fa fa-facebook" href="//www.facebook.com" target="_blank" title="facebook"></a><a class="fa fa-twitter" href="//twitter.com" target="_blank" title="twitter"></a><a class="fa fa-rss" href="/atom.xml" target="_blank" title="rss"></a></div></header><article class="cxo-up" id="cxo-content-outer"><section id="cxo-content-inner"><section id="recent-posts"><div class="recent-post-item"><div class="post-title"><a href="/2020/06/30/%E5%8F%98%E9%87%8F%E6%8F%90%E5%8D%87/">变量提升</a></div><div class="post-time"><i class="fa fa-table"></i><time datetime="2020-06-30T13:47:06.620Z">2020-06-30</time></div><div class="recent-post-content">关于变量提升，你知道多少？1234567891011121314151617181920212223242526272829303132333435363738394041424344454647var a = 0;if(true)&#123;    a = 1;    function a()&#123;&#125;;    a = 21;    console.log(a);&#125;console.log(a);/** 最新版本浏览器  1.向前兼容ES3/5规范  	1.1判断体和函数体不存在块级上下文，上下文只有全局和私有;  	1.2不论条件是否成立，带function的都要声明 ...</div><div class="read-more"><a class="more" href="/2020/06/30/%E5%8F%98%E9%87%8F%E6%8F%90%E5%8D%87/#more">ReadMore</a></div><hr></div><div class="recent-post-item"><div class="post-title"><a href="/2020/06/27/%E9%97%AD%E5%8C%85/">闭包</a></div><div class="post-time"><i class="fa fa-table"></i><time datetime="2020-06-27T15:13:14.387Z">2020-06-27</time></div><div class="recent-post-content">闭包
+从性能角度讲，项目中应该减少对闭包的使用（因为闭包会产生不释放的栈内存，过多使用容易导致内存溢出或者降低性能）
 
 
-  
-    <article id="post-test2" class="article article-type-post" itemscope itemprop="blogPost">
-  <div class="article-meta">
-    <a href="/2020/04/02/test2/" class="article-date">
-  <time datetime="2020-04-01T16:00:00.000Z" itemprop="datePublished">2020-04-02</time>
-</a>
-    
-  </div>
-  <div class="article-inner">
-    
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2020/04/02/test2/">TEST</a>
-    </h1>
-  
+作用：
 
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <h1 id="小米电脑测试博客"><a href="#小米电脑测试博客" class="headerlink" title="小米电脑测试博客"></a>小米电脑测试博客</h1><h3 id="哈哈哈哈-我是大佬！"><a href="#哈哈哈哈-我是大佬！" class="headerlink" title="哈哈哈哈  我是大佬！"></a>哈哈哈哈  我是大佬！</h3>
-      
-    </div>
-    <footer class="article-footer">
-      <a data-url="http://yoursite.com/2020/04/02/test2/" data-id="ckbi40be600012svohhtm684a" class="article-share-link">Share</a>
-      
-      
-    </footer>
-  </div>
-  
-</article>
+保护（私有变量和外界没有必然联系）
+保存（形成不销毁的栈内存，里面的私有变量等信息保存下来了）
 
 
-  
+1、JQuery -&gt; 为了防止全局变量污染，JQ中的方法和变量需要用闭包保护起来。（导入jq后，它里面有大量的方法，如果不把这些方法保护起来，用户编写的方法很容易和jq方法名相同产生冲突，即全局变量污染）
+1234567891011121314151617181920212223/*  *****  JQuery源码  ***** */(function(g ...</div><div class="read-more"><a class="more" href="/2020/06/27/%E9%97%AD%E5%8C%85/#more">ReadMore</a></div><hr></div><div class="recent-post-item"><div class="post-title"><a href="/2020/06/27/%E5%86%85%E5%AD%98%E9%87%8A%E6%94%BE%E9%97%AE%E9%A2%98/">内存释放问题</a></div><div class="post-time"><i class="fa fa-table"></i><time datetime="2020-06-27T15:13:14.382Z">2020-06-27</time></div><div class="recent-post-content">堆内存释放问题创建一个引用类型值，就会产生一个堆内存。
+如果当前创建的堆内存不被其他东西占用了，浏览器会在空闲时查找每一个内存的引用情况，不被占用的都会被回收释放掉。
+1234let obj = &#123;	age:18&#125;let oop = obj;
+
+此时obj和oop都占用了对象的堆内存，想要释放堆内存，需要手动解除变量盒值的关联（null——空对象指针）
+12obj = null;oop = null;
+
+栈内存释放问题
+打开浏览器形成的全局作用域是栈内存；
+手动执行函数形成的私有作用域是栈内存；
+基于ES6中的let/const形成的块作用域也是栈内存；
+
+全局栈内存：关掉 ...</div><div class="read-more"><a class="more" href="/2020/06/27/%E5%86%85%E5%AD%98%E9%87%8A%E6%94%BE%E9%97%AE%E9%A2%98/#more">ReadMore</a></div><hr></div><div class="recent-post-item"><div class="post-title"><a href="/2020/06/27/this/">this</a></div><div class="post-time"><i class="fa fa-table"></i><time datetime="2020-06-27T15:13:14.369Z">2020-06-27</time></div><div class="recent-post-content">this
+函数执行的主体，也就是谁执行函数，那么执行主体就是谁。this是谁和函数在哪创建的或者在哪执行都没有必然的联系。
 
 
-</section>
-        
-          <aside id="sidebar">
-  
-    
+给元素的某个事件绑定方法，当事件触发方法执行的时候，方法中的this是当前操作的元素本身。
+12345678910var name = '张三';function fn()&#123;    console.log(this.name)&#125;var obj = &#123;    name:'李四',    fn:fn&#125;obj.fn(); //李四   this -&gt; objfn();//张三   this -&gt; window(非严格模式， ...</div><div class="read-more"><a class="more" href="/2020/06/27/this/#more">ReadMore</a></div><hr></div><div class="recent-post-item"><div class="post-title"><a href="/2020/06/27/let%E5%92%8Cvar%E5%8C%BA%E5%88%AB/">let和var区别</a></div><div class="post-time"><i class="fa fa-table"></i><time datetime="2020-06-27T15:13:14.363Z">2020-06-27</time></div><div class="recent-post-content">var &amp; let 的区别
+变量提升：当浏览器开辟出供代码执行的栈内存后，代码并没有自上而下立即执行，而是继续做了一些事情：把当前作用域中所有带var/function关键字的进行提前的声明和定义，即变量提升机制。
 
-  
-    
-
-  
-    
-  
-    
-  <div class="widget-wrap">
-    <h3 class="widget-title">Archives</h3>
-    <div class="widget">
-      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/06/">June 2020</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/04/">April 2020</a></li></ul>
-    </div>
-  </div>
-
-
-  
-    
-  <div class="widget-wrap">
-    <h3 class="widget-title">Recent Posts</h3>
-    <div class="widget">
-      <ul>
-        
-          <li>
-            <a href="/2020/06/16/test/">TEST</a>
-          </li>
-        
-          <li>
-            <a href="/2020/06/16/hello-world/">Hello World</a>
-          </li>
-        
-          <li>
-            <a href="/2020/04/02/test2/">TEST</a>
-          </li>
-        
-      </ul>
-    </div>
-  </div>
-
-  
-</aside>
-        
-      </div>
-      <footer id="footer">
-  
-  <div class="outer">
-    <div id="footer-info" class="inner">
-      &copy; 2020 John Doe<br>
-      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
-    </div>
-  </div>
-</footer>
-    </div>
-    <nav id="mobile-nav">
-  
-    <a href="/" class="mobile-nav-link">Home</a>
-  
-    <a href="/archives" class="mobile-nav-link">Archives</a>
-  
-</nav>
-    
-
-<script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
-
-
-  
-<link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
-
-  
-<script src="/fancybox/jquery.fancybox.pack.js"></script>
+带var的只是提前声明：如果只声明不赋值，默认值为undefined；
+带function的不仅声明还定义：准备来说就是创建函数并且让函数与开辟的堆内存地址关联；
 
 
 
+let和const不存在变量提升机制，但是在词法解析阶段也可以得知变量是否为私有变量；
+6种创建变量的方式中，var和function存在变量提升，而let/const/class/import不存在这个 ...</div><div class="read-more"><a class="more" href="/2020/06/27/let%E5%92%8Cvar%E5%8C%BA%E5%88%AB/#more">ReadMore</a></div><hr></div><div class="recent-post-item"><div class="post-title"><a href="/2020/04/02/vue_2.6.11%E7%89%88%E6%9C%AC%E6%BA%90%E7%A0%81%E8%BF%90%E8%A1%8C%E4%BB%A5%E5%8F%8A%E6%8A%A5%E9%94%99%E5%A4%84%E7%90%86/">vue_2.6.11版本源码运行以及报错处理</a></div><div class="post-time"><i class="fa fa-table"></i><time datetime="2020-04-01T16:00:00.000Z">2020-04-02</time></div><div class="recent-post-content">
+克隆源码
+1git clone https:&#x2F;&#x2F;github.com&#x2F;vuejs&#x2F;vue.git
 
-<script src="/js/script.js"></script>
+安装依赖
+1npm install
 
+运行
+1npm run dev
 
+这个时候发现如下报错信息：
 
+天呐！最怕见到报错了，麻溜去定位原因，原来是因为rollup-plugin-alias这个包在windows环境下路径为/而未换成\
 
-  </div>
-</body>
-</html>
+解决报错
+[下载地址： https://github.com/ideayuye/rollup-plugin-alias]
+下载以上地址版本的rollup-plugin-alias并覆盖原文件。npm下载方式我没有成功，所 ...</div><div class="read-more"><a class="more" href="/2020/04/02/vue_2.6.11%E7%89%88%E6%9C%AC%E6%BA%90%E7%A0%81%E8%BF%90%E8%A1%8C%E4%BB%A5%E5%8F%8A%E6%8A%A5%E9%94%99%E5%A4%84%E7%90%86/#more">ReadMore</a></div><hr></div></section><nav class="cxo-page-nav"><span class="page-number current">1</span></nav></section></article><footer id="cxo-footer-outer"><div id="cxo-footer-inner"><p class="footer-container"><span>Site by </span><a href="http://hexo.io" target="_blank" rel="noopener"><span>Hexo</span></a><span> | theme </span><a href="https://github.com/Longlongyu/hexo-theme-Cxo" target="_blank" rel="noopener"><span>Cxo</span></a></p><i class="fa fa-user"> </i><span id="busuanzi_value_site_uv"></span><span> | </span><i class="fa fa-eye"> </i><span id="busuanzi_value_site_pv"></span></div></footer><!-- catelog--><!-- top--><i class="fa fa-arrow-up close" id="go-up" aria-hidden="true"></i></body></html>

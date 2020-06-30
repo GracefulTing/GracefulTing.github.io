@@ -1,0 +1,134 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"><meta name="author" content="GracefulTing"><meta name="renderer" content="webkit"><meta name="copyright" content="GracefulTing"><meta name="keywords" content="Welcome to GracefulTing's blog"><meta name="description" content=""><meta name="Cache-Control" content="no-cache"><meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"><title>闭包 · GracefulTing's Blog</title><link rel="stylesheet" href="/css/style.css?v=2018.7.9"><link rel="stylesheet" href="/css/animation.css?v=2018.7.9"><link rel="icon" href="/img/assets/favicon.ico"><link rel="stylesheet" href="https://cdn.bootcss.com/font-awesome/4.7.0/css/font-awesome.min.css?version=1.5.6"><!-- scripts--><script>(function( w ){
+  "use strict";
+  // rel=preload support test
+  if( !w.loadCSS ){
+    w.loadCSS = function(){};
+  }
+  // define on the loadCSS obj
+  var rp = loadCSS.relpreload = {};
+  // rel=preload feature support test
+  // runs once and returns a function for compat purposes
+  rp.support = (function(){
+    var ret;
+    try {
+      ret = w.document.createElement( "link" ).relList.supports( "preload" );
+    } catch (e) {
+      ret = false;
+    }
+    return function(){
+      return ret;
+    };
+  })();
+
+  // if preload isn't supported, get an asynchronous load by using a non-matching media attribute
+  // then change that media back to its intended value on load
+  rp.bindMediaToggle = function( link ){
+    // remember existing media attr for ultimate state, or default to 'all'
+    var finalMedia = link.media || "all";
+
+    function enableStylesheet(){
+      link.media = finalMedia;
+    }
+
+    // bind load handlers to enable media
+    if( link.addEventListener ){
+      link.addEventListener( "load", enableStylesheet );
+    } else if( link.attachEvent ){
+      link.attachEvent( "onload", enableStylesheet );
+    }
+
+    // Set rel and non-applicable media type to start an async request
+    // note: timeout allows this to happen async to let rendering continue in IE
+    setTimeout(function(){
+      link.rel = "stylesheet";
+      link.media = "only x";
+    });
+    // also enable media after 3 seconds,
+    // which will catch very old browsers (android 2.x, old firefox) that don't support onload on link
+    setTimeout( enableStylesheet, 3000 );
+  };
+
+  // loop through link elements in DOM
+  rp.poly = function(){
+    // double check this to prevent external calls from running
+    if( rp.support() ){
+      return;
+    }
+    var links = w.document.getElementsByTagName( "link" );
+    for( var i = 0; i < links.length; i++ ){
+      var link = links[ i ];
+      // qualify links to those with rel=preload and as=style attrs
+      if( link.rel === "preload" && link.getAttribute( "as" ) === "style" && !link.getAttribute( "data-loadcss" ) ){
+        // prevent rerunning on link
+        link.setAttribute( "data-loadcss", true );
+        // bind listeners to toggle media back
+        rp.bindMediaToggle( link );
+      }
+    }
+  };
+
+  // if unsupported, run the polyfill
+  if( !rp.support() ){
+    // run once at least
+    rp.poly();
+
+    // rerun poly on an interval until onload
+    var run = w.setInterval( rp.poly, 500 );
+    if( w.addEventListener ){
+      w.addEventListener( "load", function(){
+        rp.poly();
+        w.clearInterval( run );
+      } );
+    } else if( w.attachEvent ){
+      w.attachEvent( "onload", function(){
+        rp.poly();
+        w.clearInterval( run );
+      } );
+    }
+  }
+
+
+  // commonjs
+  if( typeof exports !== "undefined" ){
+    exports.loadCSS = loadCSS;
+  }
+  else {
+    w.loadCSS = loadCSS;
+  }
+}( typeof global !== "undefined" ? global : this ) );</script><script src="https://cdn.jsdelivr.net/npm/jquery@3.3.1/dist/jquery.min.js" defer></script><script src="/js/main.js?v=2018.7.9" defer></script><!-- fancybox--><link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.2.5/jquery.fancybox.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'"><script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.2.5/jquery.fancybox.min.js" defer></script><!-- busuanzi--><script async src="//dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script><meta name="generator" content="Hexo 4.2.1"></head><body><section class="profile-close" id="cxo-profile"><div class="profile-avatar"><i class="fa fa-caret-left"></i><img src="/img/assets/cat.png"></div><!--.profile-saying
+  i.fa.fa-comment
+  .saying--><div class="cxo-profile-inner"><div class="profile-name">Grace</div><div class="profile-signature">The harder, the more fortunate</div><div class="read-progress"></div></div></section><header id="cxo-intro" style="height: 70vh;background-image: url(/img/intro/index-bg.png);"><nav id="cxo-intro-nav"><section><div class="intro-nav-title"><a href="/">GracefulTing's Blog</a></div><div class="intro-nav-label-box"><a href="/">Home</a><a href="/about/">About</a><a href="/archives/">Archives</a><a href="/tags/">Tags</a></div><i class="fa fa-bars intro-nav-menu"><div class="intro-nav-drop"><a href="/">Home</a><a href="/about/">About</a><a href="/archives/">Archives</a><a href="/tags/">Tags</a></div></i><div class="clear"></div></section></nav><h1 class="post-title">闭包</h1><div class="post-intros"><div class="post-intro-meta"><span class="post-intro-time"><i class="post-intro-calendar fa fa-calendar"></i><span>2020-06-27</span></span></div></div></header><article class="cxo-up" id="cxo-content-outer"><section id="cxo-content-inner"><article class="article-entry" id="post"><h3 id="闭包"><a href="#闭包" class="headerlink" title="闭包"></a>闭包</h3><blockquote>
+<p>从性能角度讲，项目中应该减少对闭包的使用（因为闭包会产生不释放的栈内存，过多使用容易导致内存溢出或者降低性能）</p>
+</blockquote>
+<blockquote>
+<p>作用：</p>
+<ol>
+<li>保护（私有变量和外界没有必然联系）</li>
+<li>保存（形成不销毁的栈内存，里面的私有变量等信息保存下来了）</li>
+</ol>
+</blockquote>
+<p>1、JQuery -&gt; 为了防止全局变量污染，JQ中的方法和变量需要用闭包保护起来。（导入jq后，它里面有大量的方法，如果不把这些方法保护起来，用户编写的方法很容易和jq方法名相同产生冲突，即全局变量污染）</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/*  *****  JQuery源码  ***** */</span></span><br><span class="line">(<span class="function"><span class="keyword">function</span>(<span class="params">global,factory</span>)</span>&#123;</span><br><span class="line">    <span class="comment">//area1</span></span><br><span class="line">    ...  </span><br><span class="line">    <span class="comment">//typeof window !== 'undefined'?window:this   -&gt;   验证当前所处环境的全局对象是window还是global等</span></span><br><span class="line">    <span class="comment">//factory -&gt; function(window,noGlobal)&#123;&#125;</span></span><br><span class="line">    factory(global);  <span class="comment">// -&gt; 执行area2-function</span></span><br><span class="line">&#125;)(<span class="keyword">typeof</span> <span class="built_in">window</span> !== <span class="string">'undefined'</span>?<span class="built_in">window</span>:<span class="keyword">this</span>,<span class="function"><span class="keyword">function</span>(<span class="params">window,noGlobal</span>)</span>&#123;</span><br><span class="line">    <span class="comment">//area2</span></span><br><span class="line">    ...</span><br><span class="line">    <span class="keyword">var</span> jQuery = <span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">        ...</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">//通过给全局对象增加属性，把私有jquery方法暴露到全局作用域下供外面使用(&lt;=&gt;等价于return  jQuery)</span></span><br><span class="line">    <span class="comment">//外面需要使用函数中的私有内容，可以基于window.xxx和return xxx两种方式实现。</span></span><br><span class="line">    <span class="built_in">window</span>.jQuery = <span class="built_in">window</span>.$ = jQuery; </span><br><span class="line">&#125;);</span><br><span class="line">    </span><br><span class="line"><span class="comment">/*  *****  使用  ***** */</span></span><br><span class="line">jQuery();  <span class="comment">//相当于window.jQuery()</span></span><br><span class="line">或</span><br><span class="line">$();</span><br></pre></td></tr></table></figure>
+
+<p>真实项目中，我们一般把自己写的内容放到一个闭包中，这样可以有效防止自己的代码和别人代码产生冲突（全局变量污染：真实项目中是尽可能减少对全局变量的使用的）；如果需要把自己的东西给别人用，基于return和window.xxx等方式暴露给别人即可。</p>
+<p>2、基于let/const/class等创建变量，会把所在大括号（除对象的大括号之外）当作一个全新的私有块级作用域；</p>
+<ul>
+<li>函数执行会产生私有的栈内存（作用域/执行上下文）</li>
+<li>let等也会产生私有的栈内存（var不会）</li>
+</ul>
+<p>闭包练习题：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> ary = [<span class="number">1</span>,<span class="number">2</span>,<span class="number">3</span>,<span class="number">4</span>];</span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">fn</span>(<span class="params">ary</span>)</span>&#123;</span><br><span class="line">    ary[<span class="number">0</span>] = <span class="number">0</span>;</span><br><span class="line">    ary = [<span class="number">0</span>];</span><br><span class="line">    ary[<span class="number">0</span>] = <span class="number">100</span>;</span><br><span class="line">    <span class="keyword">return</span> ary;</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">var</span> res = fn(ary);</span><br><span class="line"><span class="built_in">console</span>.log(ary);    <span class="comment">//[0,2,3,4]</span></span><br><span class="line"><span class="built_in">console</span>.log(res);	 <span class="comment">//[100]</span></span><br></pre></td></tr></table></figure>
+
+<p>解析：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment">	第一步：全局作用域-变量提升</span></span><br><span class="line"><span class="comment">	ary</span></span><br><span class="line"><span class="comment">	fn——AF0(堆内存，存储fn函数中的代码字符串)</span></span><br><span class="line"><span class="comment">	res</span></span><br><span class="line"><span class="comment">	第二步：代码执行</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line"><span class="keyword">var</span> ary = [<span class="number">1</span>,<span class="number">2</span>,<span class="number">3</span>,<span class="number">4</span>];   <span class="comment">//2.1赋值-引用数据类型-开辟堆内存AF1</span></span><br><span class="line"><span class="comment">//2.2变量提升阶段做处理</span></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">fn</span>(<span class="params">ary</span>)</span>&#123;</span><br><span class="line">    <span class="comment">/*</span></span><br><span class="line"><span class="comment">    	第三步：fn函数执行  传参ary，即AF1  形成私有作用域fn(AF1)</span></span><br><span class="line"><span class="comment">    	3.1——形参赋值，变量提升 ——&gt; ary赋值AF1</span></span><br><span class="line"><span class="comment">    	3.2——代码执行</span></span><br><span class="line"><span class="comment">    		arr[0]=0;  AF1堆中的第一个元素值修改</span></span><br><span class="line"><span class="comment">    		ary = [0];  开辟新堆BF0,一个元素为0,修改ary对应的地址为BF0</span></span><br><span class="line"><span class="comment">    		ary[0] = 100;  修改BF0中元素为100</span></span><br><span class="line"><span class="comment">    		return ary;   -&gt; return BF0;</span></span><br><span class="line"><span class="comment">    */</span></span><br><span class="line">    ary[<span class="number">0</span>] = <span class="number">0</span>;</span><br><span class="line">    ary = [<span class="number">0</span>];</span><br><span class="line">    ary[<span class="number">0</span>] = <span class="number">100</span>;</span><br><span class="line">    <span class="keyword">return</span> ary;</span><br><span class="line">&#125;   </span><br><span class="line"><span class="keyword">var</span> res = fn(ary);   <span class="comment">//2.3-fn函数传实参，执行函数并将返回值赋给res    3.3-res值为BF0</span></span><br><span class="line"><span class="built_in">console</span>.log(ary);    <span class="comment">//第四步：输出[0,2,3,4]</span></span><br><span class="line"><span class="built_in">console</span>.log(res);	 <span class="comment">//第五步：输出[100]</span></span><br></pre></td></tr></table></figure>
+
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment">	var test = 自执行函数执行的返回结果;</span></span><br><span class="line"><span class="comment">	1、自执行函数执行</span></span><br><span class="line"><span class="comment">		test = AF0(小函数);</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line"><span class="keyword">var</span> test = (<span class="function"><span class="keyword">function</span>(<span class="params">i</span>)</span>&#123;</span><br><span class="line">    	<span class="comment">/*</span></span><br><span class="line"><span class="comment">    		1.1 形参赋值，变量提升 ——  i=2</span></span><br><span class="line"><span class="comment">    		1.2 return AF0(小函数);</span></span><br><span class="line"><span class="comment">    	*/</span></span><br><span class="line">    	<span class="keyword">return</span> <span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">            <span class="comment">//传递5无用，没有形参</span></span><br><span class="line">            alert(i*=<span class="number">2</span>);  <span class="comment">//i=i*2,i找上级=&gt; 2*2=4     =&gt; "4"</span></span><br><span class="line">        &#125;</span><br><span class="line">&#125;)(<span class="number">2</span>)</span><br><span class="line">test(<span class="number">5</span>);</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> a = <span class="number">1</span>;</span><br><span class="line"><span class="keyword">var</span> obj = &#123;</span><br><span class="line">    name:<span class="string">'tom'</span></span><br><span class="line">&#125;   <span class="comment">//obj——AF0</span></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">fn</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">    <span class="comment">//形参赋值&amp;变量提升  var a2;</span></span><br><span class="line">    <span class="keyword">var</span> a2 = a;  <span class="comment">//a2 = 1;</span></span><br><span class="line">    obj2 = obj;   <span class="comment">//window.obj2 = AF0;  不是私有</span></span><br><span class="line">    a2 = a;   <span class="comment">//a2=1;</span></span><br><span class="line">    obj2.name = <span class="string">'jack'</span>;  <span class="comment">//AF0堆中的name修改为jack</span></span><br><span class="line">&#125;</span><br><span class="line">fn();</span><br><span class="line"><span class="built_in">console</span>.log(a)    <span class="comment">//1</span></span><br><span class="line"><span class="built_in">console</span>.log(obj)  <span class="comment">//&#123;name:'jack'&#125;</span></span><br></pre></td></tr></table></figure>
+
+<p>先形参赋值后变量提升</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> a = <span class="number">1</span>;</span><br><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment">	1、形参赋值    a=1</span></span><br><span class="line"><span class="comment">	2、变量提升  </span></span><br><span class="line"><span class="comment">		var a;(无效，因为已有形参a)</span></span><br><span class="line"><span class="comment">		function a... -&gt; 堆BF0; (声明无效，但需要给a赋值为函数)</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">fn</span>(<span class="params">a</span>)</span>&#123;</span><br><span class="line">    <span class="built_in">console</span>.log(a);   <span class="comment">// 输出: 函数-f a() &#123;&#125;</span></span><br><span class="line">    <span class="keyword">var</span> a = <span class="number">2</span>;</span><br><span class="line">    <span class="function"><span class="keyword">function</span> <span class="title">a</span>(<span class="params"></span>)</span>&#123;&#125;</span><br><span class="line">    <span class="built_in">console</span>.log(a)    <span class="comment">//2</span></span><br><span class="line">&#125;</span><br><span class="line">fn(a);  <span class="comment">//把全局a的值1当作实参传递给fn</span></span><br></pre></td></tr></table></figure>
+
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment">	1.全局作用域</span></span><br><span class="line"><span class="comment">		1.1变量提升：a b A-AF0   </span></span><br><span class="line"><span class="comment">		1.2代码执行：a=0  b=0  A(1)执行</span></span><br><span class="line"><span class="comment">			2.2执行完之后，A改为BF0</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line"><span class="keyword">var</span> a=<span class="number">0</span>,b=<span class="number">0</span>;</span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">A</span>(<span class="params">a</span>)</span>&#123;</span><br><span class="line">    <span class="comment">/*</span></span><br><span class="line"><span class="comment">    	2.A(1)执行形成私有作用域AAA =&gt; AF0(1)</span></span><br><span class="line"><span class="comment">    		2.1形参赋值&amp;变量提升   形参赋值a=1</span></span><br><span class="line"><span class="comment">    		2.2代码执行 A=BF0,开辟堆存储代码字符串   A是全局window.A</span></span><br><span class="line"><span class="comment">    		2.3 alert(a++); 弹出字符串"1"——先弹出a在累加  a=2</span></span><br><span class="line"><span class="comment">    	3.A(2)执行形成私有作用域BBB =&gt; BF0(2)</span></span><br><span class="line"><span class="comment">    		3.1形参赋值&amp;变量提升 形参赋值b = 2;</span></span><br><span class="line"><span class="comment">    		3.2代码执行 </span></span><br><span class="line"><span class="comment">    			alert(a+b++); 弹出字符串"4"——先弹出4在累加 b=3</span></span><br><span class="line"><span class="comment">    			=&gt;a+2  //a是上级作用域AAA中的 b是私有</span></span><br><span class="line"><span class="comment">    			=&gt;b++</span></span><br><span class="line"><span class="comment">    */</span></span><br><span class="line">    A = <span class="function"><span class="keyword">function</span>(<span class="params">b</span>)</span>&#123;</span><br><span class="line">        alert(a+b++);</span><br><span class="line">    &#125;</span><br><span class="line">    alert(a++);</span><br><span class="line">&#125;</span><br><span class="line">A(<span class="number">1</span>);</span><br><span class="line">A(<span class="number">2</span>);</span><br></pre></td></tr></table></figure>
+
+</article><!-- lincense--><div class="post-paginator"><a class="prevSlogan" href="/2020/06/30/%E5%8F%98%E9%87%8F%E6%8F%90%E5%8D%87/" title="变量提升"><span>< PreviousPost</span><br><span class="prevTitle">变量提升</span></a><a class="nextSlogan" href="/2020/06/27/%E5%86%85%E5%AD%98%E9%87%8A%E6%94%BE%E9%97%AE%E9%A2%98/" title="内存释放问题"><span>NextPost ></span><br><span class="nextTitle">内存释放问题</span></a><div class="clear"></div></div><div id="comment"></div></section></article><footer id="cxo-footer-outer"><div id="cxo-footer-inner"><p class="footer-container"><span>Site by </span><a href="http://hexo.io" target="_blank" rel="noopener"><span>Hexo</span></a><span> | theme </span><a href="https://github.com/Longlongyu/hexo-theme-Cxo" target="_blank" rel="noopener"><span>Cxo</span></a></p><i class="fa fa-user"> </i><span id="busuanzi_value_site_uv"></span><span> | </span><i class="fa fa-eye"> </i><span id="busuanzi_value_site_pv"></span></div></footer><!-- catelog--><div class="toc-wrapper" style="top: 70vh;"><div class="toc-catalog"><i class="fa fa-list"> </i><span>CATALOG</span></div><ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#闭包"><span class="toc-number">1.</span> <span class="toc-text">闭包</span></a></li></ol></div><!-- top--><i class="fa fa-arrow-up close" id="go-up" aria-hidden="true"></i></body></html>
