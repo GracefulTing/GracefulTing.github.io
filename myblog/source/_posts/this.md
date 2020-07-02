@@ -87,7 +87,7 @@
       },
       wait:function(){
           //this->Tom
-          var fun = this.show;   //Tome.show
+          var fun = this.show;   //Tom.show
           fun(); //this->window->window.name->"window"
       }
    }
