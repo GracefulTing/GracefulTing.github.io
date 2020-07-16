@@ -104,6 +104,14 @@
 <p>此时obj和oop都占用了对象的堆内存，想要释放堆内存，需要手动解除变量盒值的关联（null——空对象指针）</p>
 <figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">obj = <span class="literal">null</span>;</span><br><span class="line">oop = <span class="literal">null</span>;</span><br></pre></td></tr></table></figure>
 
+<p>浏览器的垃圾回收机制：</p>
+<ol>
+<li><p>引用计数（以IE为主）：在某些情况下会导致计数混乱，这样会造成内存不能被释放（内存泄漏）</p>
+</li>
+<li><p>检测引用（占用）（以谷歌为主）：浏览器在空闲时会依次检测所有的堆内存，把没有被任何事物占用的内存释放掉，以此优化内存。</p>
+<p>手动释放内存，其实就是解除占用，手动赋值为null即可。</p>
+</li>
+</ol>
 <h3 id="栈内存释放问题"><a href="#栈内存释放问题" class="headerlink" title="栈内存释放问题"></a>栈内存释放问题</h3><ul>
 <li>打开浏览器形成的全局作用域是栈内存；</li>
 <li>手动执行函数形成的私有作用域是栈内存；</li>

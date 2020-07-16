@@ -1,0 +1,135 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"><meta name="author" content="GracefulTing"><meta name="renderer" content="webkit"><meta name="copyright" content="GracefulTing"><meta name="keywords" content="Welcome to GracefulTing's blog"><meta name="description" content=""><meta name="Cache-Control" content="no-cache"><meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"><title>关于堆栈内存，你知道多少？ · GracefulTing's Blog</title><link rel="stylesheet" href="/css/style.css?v=2018.7.9"><link rel="stylesheet" href="/css/animation.css?v=2018.7.9"><link rel="icon" href="/img/assets/favicon.ico"><link rel="stylesheet" href="https://cdn.bootcss.com/font-awesome/4.7.0/css/font-awesome.min.css?version=1.5.6"><!-- scripts--><script>(function( w ){
+  "use strict";
+  // rel=preload support test
+  if( !w.loadCSS ){
+    w.loadCSS = function(){};
+  }
+  // define on the loadCSS obj
+  var rp = loadCSS.relpreload = {};
+  // rel=preload feature support test
+  // runs once and returns a function for compat purposes
+  rp.support = (function(){
+    var ret;
+    try {
+      ret = w.document.createElement( "link" ).relList.supports( "preload" );
+    } catch (e) {
+      ret = false;
+    }
+    return function(){
+      return ret;
+    };
+  })();
+
+  // if preload isn't supported, get an asynchronous load by using a non-matching media attribute
+  // then change that media back to its intended value on load
+  rp.bindMediaToggle = function( link ){
+    // remember existing media attr for ultimate state, or default to 'all'
+    var finalMedia = link.media || "all";
+
+    function enableStylesheet(){
+      link.media = finalMedia;
+    }
+
+    // bind load handlers to enable media
+    if( link.addEventListener ){
+      link.addEventListener( "load", enableStylesheet );
+    } else if( link.attachEvent ){
+      link.attachEvent( "onload", enableStylesheet );
+    }
+
+    // Set rel and non-applicable media type to start an async request
+    // note: timeout allows this to happen async to let rendering continue in IE
+    setTimeout(function(){
+      link.rel = "stylesheet";
+      link.media = "only x";
+    });
+    // also enable media after 3 seconds,
+    // which will catch very old browsers (android 2.x, old firefox) that don't support onload on link
+    setTimeout( enableStylesheet, 3000 );
+  };
+
+  // loop through link elements in DOM
+  rp.poly = function(){
+    // double check this to prevent external calls from running
+    if( rp.support() ){
+      return;
+    }
+    var links = w.document.getElementsByTagName( "link" );
+    for( var i = 0; i < links.length; i++ ){
+      var link = links[ i ];
+      // qualify links to those with rel=preload and as=style attrs
+      if( link.rel === "preload" && link.getAttribute( "as" ) === "style" && !link.getAttribute( "data-loadcss" ) ){
+        // prevent rerunning on link
+        link.setAttribute( "data-loadcss", true );
+        // bind listeners to toggle media back
+        rp.bindMediaToggle( link );
+      }
+    }
+  };
+
+  // if unsupported, run the polyfill
+  if( !rp.support() ){
+    // run once at least
+    rp.poly();
+
+    // rerun poly on an interval until onload
+    var run = w.setInterval( rp.poly, 500 );
+    if( w.addEventListener ){
+      w.addEventListener( "load", function(){
+        rp.poly();
+        w.clearInterval( run );
+      } );
+    } else if( w.attachEvent ){
+      w.attachEvent( "onload", function(){
+        rp.poly();
+        w.clearInterval( run );
+      } );
+    }
+  }
+
+
+  // commonjs
+  if( typeof exports !== "undefined" ){
+    exports.loadCSS = loadCSS;
+  }
+  else {
+    w.loadCSS = loadCSS;
+  }
+}( typeof global !== "undefined" ? global : this ) );</script><script src="https://cdn.jsdelivr.net/npm/jquery@3.3.1/dist/jquery.min.js" defer></script><script src="/js/main.js?v=2018.7.9" defer></script><!-- fancybox--><link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.2.5/jquery.fancybox.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'"><script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.2.5/jquery.fancybox.min.js" defer></script><!-- busuanzi--><script async src="//dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script><meta name="generator" content="Hexo 4.2.1"></head><body><section class="profile-close" id="cxo-profile"><div class="profile-avatar"><i class="fa fa-caret-left"></i><img src="/img/assets/cat.png"></div><!--.profile-saying
+  i.fa.fa-comment
+  .saying--><div class="cxo-profile-inner"><div class="profile-name">Grace</div><div class="profile-signature">The harder, the more fortunate</div><div class="read-progress"></div></div></section><header id="cxo-intro" style="height: 70vh;background-image: url(/img/intro/index-bg.png);"><nav id="cxo-intro-nav"><section><div class="intro-nav-title"><a href="/">GracefulTing's Blog</a></div><div class="intro-nav-label-box"><a href="/">Home</a><a href="/about/">About</a><a href="/archives/">Archives</a><a href="/tags/">Tags</a></div><i class="fa fa-bars intro-nav-menu"><div class="intro-nav-drop"><a href="/">Home</a><a href="/about/">About</a><a href="/archives/">Archives</a><a href="/tags/">Tags</a></div></i><div class="clear"></div></section></nav><h1 class="post-title">关于堆栈内存，你知道多少？</h1><div class="post-intros"><div class="post-intro-meta"><span class="post-intro-time"><i class="post-intro-calendar fa fa-calendar"></i><span>2020-07-15</span></span></div></div></header><article class="cxo-up" id="cxo-content-outer"><section id="cxo-content-inner"><article class="article-entry" id="post"><h2 id="执行环境栈和执行上下文"><a href="#执行环境栈和执行上下文" class="headerlink" title="执行环境栈和执行上下文"></a>执行环境栈和执行上下文</h2><p>编写的JS都需要在一个环境中运行：</p>
+<ol>
+<li>浏览器（引擎）</li>
+<li>node（基于v8渲染js）</li>
+<li>webview（v8引擎）</li>
+<li>……</li>
+</ol>
+<p><strong>执行环境栈 ECStack（Execution Context Stack）</strong>：浏览器想要执行JS代码，需要提供一个供代码执行的环境，该环境即为执行环境栈，又称 栈内存（从内存中分配出来的一块内存）</p>
+<p><strong>执行上下文 EC（Execution Context）</strong>：在编程语言中，代码执行中为了区分全局和函数执行所处的不同作用域，目的是为了区分每个词法作用域下代码的独立性，形成执行上下文 （代码执行所在的词法作用域，或者代码执行所处的范围）</p>
+<p>在每一个上下文代码执行的时候，都可能会创建变量。所以在每一个上下文（无论是全局还是私有），都会有一个存储变量的空间；分别为：VO（Varibale Object）和 AO（Active Object）。</p>
+<p><strong>变量对象</strong>：存放当前上下文中的变量，只不过全局上下文称为VO(G)，私有上下文中称为AO(G)，但是也是变量对象；</p>
+<p><strong>全局对象</strong>：GO（Global object），跟VO/AO没有关系，浏览器把所有后期需要供JS调取使用的属性和方法（内置）都放在GO对象中，并且在全局中创建一个window变量指向它。全局对象方法有setInterval、eval、JSON….等</p>
+<p>这么看，我们可以把执行环境栈理解为一个菜市场，那么市场中每个店面都是一个私有上下文，互相独立，各家卖各家的蔬菜水果。每家店中的蔬果都可以当作是AO中的对象。市场中的管理部门以及停车场都可以当作是全局执行上下文，白天卖菜就要进市场开门，代表了进栈执行，等到晚上关门，代表执行完出栈。个人觉得可以这样理解。</p>
+<h2 id="对象数据类型"><a href="#对象数据类型" class="headerlink" title="对象数据类型"></a>对象数据类型</h2><p>对象数据类型：由0到多组键值对（属性名和属性值）组成的.</p>
+<p>属性名的类型：</p>
+<ul>
+<li>说法1：属性名类型只能是字符串或者Symbol</li>
+<li>说法2：属性名类型可以是任何基本类型值，处理中可以和字符串互通(个人更认同说法2)</li>
+<li>但是属性名绝对不能是引用数据类型，如果设置引用类型，最后也是转换为字符串处理的</li>
+</ul>
+<p>obj[x] —— x为变量，把x变量存储的值当作属性名，获取对象的属性值<br>obj[‘x’] —— 获取属性名为x的属性值  &lt;=&gt;  obj.x</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment"> *		属性名为对象-----转为字符串'[object Object]'</span></span><br><span class="line"><span class="comment"> *		let x=&#123;</span></span><br><span class="line"><span class="comment"> *			0:0</span></span><br><span class="line"><span class="comment"> *		&#125;</span></span><br><span class="line"><span class="comment"> *		let obj=&#123;&#125;;</span></span><br><span class="line"><span class="comment"> *		obj[x]=100; </span></span><br><span class="line"><span class="comment"> *		console.log(obj);   //&#123;'[object Object]':100&#125;</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> x = <span class="number">20</span>;</span><br><span class="line"><span class="keyword">let</span> obj = &#123;</span><br><span class="line">    x:<span class="number">100</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">//属性名肯定是一个值</span></span><br><span class="line">obj[x] ———— 把x变量存储的值当作属性名，获取对象的属性值 =&gt; obj[<span class="number">20</span>] =&gt; <span class="literal">undefined</span></span><br><span class="line">obj[<span class="string">'x'</span>]&lt;=&gt;obj.x ———— 获取属性名为x的属性值 =&gt; <span class="number">100</span></span><br><span class="line"></span><br><span class="line"><span class="comment">//练习</span></span><br><span class="line"><span class="keyword">var</span> a = &#123;&#125;,b=<span class="string">'0'</span>,c=<span class="number">0</span>;</span><br><span class="line">a[b]=<span class="string">'hello'</span>;  =&gt; a[<span class="string">'0'</span>]=<span class="string">'hello'</span></span><br><span class="line">a[c]=<span class="string">'world'</span>;  =&gt; a[<span class="number">0</span>] = <span class="string">'world'</span></span><br><span class="line"><span class="built_in">console</span>.log(a[b]);   <span class="comment">//'world'</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> a = &#123;&#125;,b=<span class="built_in">Symbol</span>(<span class="string">'1'</span>),c=<span class="built_in">Symbol</span>(<span class="string">'1'</span>);   <span class="comment">//symbol唯一值，b!=c</span></span><br><span class="line">a[b]=<span class="string">'hello'</span>; </span><br><span class="line">a[c]=<span class="string">'world'</span>;</span><br><span class="line"><span class="built_in">console</span>.log(a[b]);   <span class="comment">//'hello'</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> a = &#123;&#125;,b=&#123;<span class="attr">n</span>:<span class="string">'1'</span>&#125;,c=&#123;<span class="attr">m</span>:<span class="string">'2'</span>&#125;;  </span><br><span class="line">a[b]=<span class="string">'hello'</span>;  =&gt; a[<span class="string">'[object Object]'</span>]=<span class="string">'hello'</span></span><br><span class="line">a[c]=<span class="string">'world'</span>;  =&gt; a[<span class="string">'[object Object]'</span>]=<span class="string">'world'</span></span><br><span class="line"><span class="built_in">console</span>.log(a[b]);   <span class="comment">//'world'</span></span><br></pre></td></tr></table></figure>
+
+<p>创建变量&amp;赋值：</p>
+<ol>
+<li>创建一个值（基本类型值直接存储在栈内存中，引用数据类型值需要先开辟一个堆内存，把内存存储进去后，把堆内存地址存放到栈内存中供变量调用）；</li>
+<li>创建一个变量存储在变量对象中；（声明）</li>
+<li>让变量和值进行关联（指针指向的过程）；（定义）</li>
+</ol>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> a = <span class="number">12</span>,b = <span class="number">13</span>;   ===&gt;  <span class="keyword">let</span> a = <span class="number">12</span>;<span class="keyword">let</span> b = <span class="number">13</span>;   </span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> a = b = <span class="number">12</span>;  <span class="comment">//从右到左 1.创建值12  2.b=12   3.let a = 12</span></span><br><span class="line"></span><br><span class="line"><span class="comment">//成员访问a.x优先级很大，所以无论怎么调换位置都是先处理a.x=&#123;&#125;</span></span><br><span class="line">a.x = a = &#123;&#125;</span><br><span class="line">a = a.x =&#123;&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// a ----- AF0</span></span><br><span class="line"><span class="keyword">var</span> a = &#123;</span><br><span class="line">    n:<span class="number">1</span></span><br><span class="line">&#125;        </span><br><span class="line"><span class="comment">// b------ AF0</span></span><br><span class="line"><span class="keyword">var</span> b = a;</span><br><span class="line"><span class="comment">//a.x ----- AF1</span></span><br><span class="line"><span class="comment">// a ------ AF1</span></span><br><span class="line">a.x = a = &#123;</span><br><span class="line">    n:<span class="number">2</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="built_in">console</span>.log(a.x)   <span class="comment">//undefined</span></span><br><span class="line"><span class="built_in">console</span>.log(b)     </span><br><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment">&#123;</span></span><br><span class="line"><span class="comment">	n:1,</span></span><br><span class="line"><span class="comment">	x:&#123;</span></span><br><span class="line"><span class="comment">		n:2</span></span><br><span class="line"><span class="comment">	&#125;</span></span><br><span class="line"><span class="comment">&#125;</span></span><br><span class="line"><span class="comment">*/</span></span><br></pre></td></tr></table></figure>
+
+
+
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> x = [<span class="number">12</span>,<span class="number">23</span>];</span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">fn</span>(<span class="params">y</span>)</span>&#123;</span><br><span class="line">    y[<span class="number">0</span>] = <span class="number">100</span>;</span><br><span class="line">    y = [<span class="number">100</span>];</span><br><span class="line">    y[<span class="number">1</span>] = <span class="number">200</span>;</span><br><span class="line">    <span class="built_in">console</span>.log(y);   <span class="comment">//[100,200]</span></span><br><span class="line">&#125;</span><br><span class="line">fn(x);</span><br><span class="line"><span class="built_in">console</span>.log(x);  <span class="comment">//[100,23]</span></span><br><span class="line"></span><br><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment">* 创建一个函数</span></span><br><span class="line"><span class="comment">* 1.开辟一个堆内存（16进制内存地址）</span></span><br><span class="line"><span class="comment">* 2.声明当前函数作用域（在哪个上下文中创建得，它得作用域就是谁）</span></span><br><span class="line"><span class="comment">* -.顺便标记形参（方便执行时看是否有形参）</span></span><br><span class="line"><span class="comment">* 3.把函数体中代码当作“字符串”存储在堆内存中（创建一个函数，存储得是一堆字符串，所以函数只要不执行，函数就没啥意义）</span></span><br><span class="line"><span class="comment">* 4.把函数堆地址类似于对象一样放到栈中供变量调用（函数名）</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line"></span><br><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment">* 执行函数</span></span><br><span class="line"><span class="comment">* 1.会形成一个全新的私有上下文EC(XXX)（目的：供函数体代码执行），然后进栈执行</span></span><br><span class="line"><span class="comment">* 2.在私有上下文中有一个存放私有变量的变量对象AO(xxx)</span></span><br><span class="line"><span class="comment">* 3.在代码执行前：</span></span><br><span class="line"><span class="comment">* 	初始化它的作用域链 &lt;自己的上下文,函数作用域&gt;</span></span><br><span class="line"><span class="comment">*   初始化this（箭头函数没有this）</span></span><br><span class="line"><span class="comment">*	初始化arguments实参集合（箭头函数没有arguments）</span></span><br><span class="line"><span class="comment">* 	形参赋值（形参变量是函数的私有变量，需要存储在AO中）</span></span><br><span class="line"><span class="comment">*	变量提升（在私有上下文中声明的变量都是私有变量）</span></span><br><span class="line"><span class="comment">*	....</span></span><br><span class="line"><span class="comment">* 4.代码执行（把之前在函数堆中存储的字符串拿来在上下文中依次执行）</span></span><br><span class="line"><span class="comment">*	作用域链查找机制：在代码执行中，遇到一个变量首先看是否为私有变量，如果是私有变量，接下来所有操作都是操作私有的（和外界没有直接的练习）;如果不是自己私有的，则按照scoped-chain向上级上下文中查找（如果是上级的，接下来的操作都是操作上级上下文中的变量）,一直找，直到找到EC(G)为止。</span></span><br><span class="line"><span class="comment">* 5.根据实际情况确定当前上下文是否出栈释放</span></span><br><span class="line"><span class="comment">*	为保证栈内存大小（内存优化），一般情况下，如果当前函数执行产生的上下文，在进栈且代码执行完后，会把上下文移除栈（上下文释放，之前在上下文中存储的私有变量等信息也就跟着释放了） =&gt;全局上下文是在打开页面生成的，也需要在关闭页面的时候释放掉（只有页面关闭才会被释放掉）</span></span><br><span class="line"><span class="comment">*	特殊情况：只要当前上下文中的某些内容被上下文以外的东西占用，那么当前上下文是不能被释放的（上下文中存储的变量等信息也保留下来了）  =&gt; 这种情况就是大家认为的闭包</span></span><br><span class="line"><span class="comment">*</span></span><br><span class="line"><span class="comment">*</span></span><br><span class="line"><span class="comment">* 函数第二次执行会形成一个全新的私有上下文，把之前做过的事情还是原封不动的再执行依次，此时形成的上下文和上一次形成的上下文没有必然联系</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line"></span><br><span class="line"><span class="comment">//实参-值     形参-私有变量</span></span><br></pre></td></tr></table></figure>
+
+</article><!-- lincense--><div class="post-paginator"><a class="prevSlogan" href="/2020/07/15/%E6%9C%AA%E5%91%BD%E5%90%8D/" title="未命名"><span>< PreviousPost</span><br><span class="prevTitle">未命名</span></a><a class="nextSlogan" href="/2020/07/15/let%20&amp;%20var%E5%8C%BA%E5%88%AB/" title="let &amp; var区别"><span>NextPost ></span><br><span class="nextTitle">let &amp; var区别</span></a><div class="clear"></div></div><div id="comment"></div></section></article><footer id="cxo-footer-outer"><div id="cxo-footer-inner"><p class="footer-container"><span>Site by </span><a href="http://hexo.io" target="_blank" rel="noopener"><span>Hexo</span></a><span> | theme </span><a href="https://github.com/Longlongyu/hexo-theme-Cxo" target="_blank" rel="noopener"><span>Cxo</span></a></p><i class="fa fa-user"> </i><span id="busuanzi_value_site_uv"></span><span> | </span><i class="fa fa-eye"> </i><span id="busuanzi_value_site_pv"></span></div></footer><!-- catelog--><div class="toc-wrapper" style="top: 70vh;"><div class="toc-catalog"><i class="fa fa-list"> </i><span>CATALOG</span></div><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#执行环境栈和执行上下文"><span class="toc-number">1.</span> <span class="toc-text">执行环境栈和执行上下文</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#对象数据类型"><span class="toc-number">2.</span> <span class="toc-text">对象数据类型</span></a></li></ol></div><!-- top--><i class="fa fa-arrow-up close" id="go-up" aria-hidden="true"></i></body></html>

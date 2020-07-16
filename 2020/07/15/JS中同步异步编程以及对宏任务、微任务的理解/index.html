@@ -1,0 +1,144 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"><meta name="author" content="GracefulTing"><meta name="renderer" content="webkit"><meta name="copyright" content="GracefulTing"><meta name="keywords" content="Welcome to GracefulTing's blog"><meta name="description" content=""><meta name="Cache-Control" content="no-cache"><meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"><title>JS中同步异步编程以及对宏任务、微任务的理解 · GracefulTing's Blog</title><link rel="stylesheet" href="/css/style.css?v=2018.7.9"><link rel="stylesheet" href="/css/animation.css?v=2018.7.9"><link rel="icon" href="/img/assets/favicon.ico"><link rel="stylesheet" href="https://cdn.bootcss.com/font-awesome/4.7.0/css/font-awesome.min.css?version=1.5.6"><!-- scripts--><script>(function( w ){
+  "use strict";
+  // rel=preload support test
+  if( !w.loadCSS ){
+    w.loadCSS = function(){};
+  }
+  // define on the loadCSS obj
+  var rp = loadCSS.relpreload = {};
+  // rel=preload feature support test
+  // runs once and returns a function for compat purposes
+  rp.support = (function(){
+    var ret;
+    try {
+      ret = w.document.createElement( "link" ).relList.supports( "preload" );
+    } catch (e) {
+      ret = false;
+    }
+    return function(){
+      return ret;
+    };
+  })();
+
+  // if preload isn't supported, get an asynchronous load by using a non-matching media attribute
+  // then change that media back to its intended value on load
+  rp.bindMediaToggle = function( link ){
+    // remember existing media attr for ultimate state, or default to 'all'
+    var finalMedia = link.media || "all";
+
+    function enableStylesheet(){
+      link.media = finalMedia;
+    }
+
+    // bind load handlers to enable media
+    if( link.addEventListener ){
+      link.addEventListener( "load", enableStylesheet );
+    } else if( link.attachEvent ){
+      link.attachEvent( "onload", enableStylesheet );
+    }
+
+    // Set rel and non-applicable media type to start an async request
+    // note: timeout allows this to happen async to let rendering continue in IE
+    setTimeout(function(){
+      link.rel = "stylesheet";
+      link.media = "only x";
+    });
+    // also enable media after 3 seconds,
+    // which will catch very old browsers (android 2.x, old firefox) that don't support onload on link
+    setTimeout( enableStylesheet, 3000 );
+  };
+
+  // loop through link elements in DOM
+  rp.poly = function(){
+    // double check this to prevent external calls from running
+    if( rp.support() ){
+      return;
+    }
+    var links = w.document.getElementsByTagName( "link" );
+    for( var i = 0; i < links.length; i++ ){
+      var link = links[ i ];
+      // qualify links to those with rel=preload and as=style attrs
+      if( link.rel === "preload" && link.getAttribute( "as" ) === "style" && !link.getAttribute( "data-loadcss" ) ){
+        // prevent rerunning on link
+        link.setAttribute( "data-loadcss", true );
+        // bind listeners to toggle media back
+        rp.bindMediaToggle( link );
+      }
+    }
+  };
+
+  // if unsupported, run the polyfill
+  if( !rp.support() ){
+    // run once at least
+    rp.poly();
+
+    // rerun poly on an interval until onload
+    var run = w.setInterval( rp.poly, 500 );
+    if( w.addEventListener ){
+      w.addEventListener( "load", function(){
+        rp.poly();
+        w.clearInterval( run );
+      } );
+    } else if( w.attachEvent ){
+      w.attachEvent( "onload", function(){
+        rp.poly();
+        w.clearInterval( run );
+      } );
+    }
+  }
+
+
+  // commonjs
+  if( typeof exports !== "undefined" ){
+    exports.loadCSS = loadCSS;
+  }
+  else {
+    w.loadCSS = loadCSS;
+  }
+}( typeof global !== "undefined" ? global : this ) );</script><script src="https://cdn.jsdelivr.net/npm/jquery@3.3.1/dist/jquery.min.js" defer></script><script src="/js/main.js?v=2018.7.9" defer></script><!-- fancybox--><link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.2.5/jquery.fancybox.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'"><script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.2.5/jquery.fancybox.min.js" defer></script><!-- busuanzi--><script async src="//dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script><meta name="generator" content="Hexo 4.2.1"></head><body><section class="profile-close" id="cxo-profile"><div class="profile-avatar"><i class="fa fa-caret-left"></i><img src="/img/assets/cat.png"></div><!--.profile-saying
+  i.fa.fa-comment
+  .saying--><div class="cxo-profile-inner"><div class="profile-name">Grace</div><div class="profile-signature">The harder, the more fortunate</div><div class="read-progress"></div></div></section><header id="cxo-intro" style="height: 70vh;background-image: url(/img/intro/index-bg.png);"><nav id="cxo-intro-nav"><section><div class="intro-nav-title"><a href="/">GracefulTing's Blog</a></div><div class="intro-nav-label-box"><a href="/">Home</a><a href="/about/">About</a><a href="/archives/">Archives</a><a href="/tags/">Tags</a></div><i class="fa fa-bars intro-nav-menu"><div class="intro-nav-drop"><a href="/">Home</a><a href="/about/">About</a><a href="/archives/">Archives</a><a href="/tags/">Tags</a></div></i><div class="clear"></div></section></nav><h1 class="post-title">JS中同步异步编程以及对宏任务、微任务的理解</h1><div class="post-intros"><div class="post-intro-meta"><span class="post-intro-time"><i class="post-intro-calendar fa fa-calendar"></i><span>2020-07-15</span></span></div></div></header><article class="cxo-up" id="cxo-content-outer"><section id="cxo-content-inner"><article class="article-entry" id="post"><h2 id="同步异步编程"><a href="#同步异步编程" class="headerlink" title="同步异步编程"></a>同步异步编程</h2><p>浏览器是多线程的，包含：</p>
+<ol>
+<li>GUI渲染线程；</li>
+<li>HTTP网络请求线程（并发数 6-7）；</li>
+<li>事件监听、定时器监听…</li>
+</ol>
+<p>JS代码的运行是单线程的：浏览器只分配一个GUI渲染线程去执行JS代码。</p>
+<p>同步编程——对于大部分js来讲，上面代码没有执行完下面代码是不能执行的；</p>
+<p>异步编程——某些JS代码（事件绑定、定时器、Promise / async / await / ajax等），需要在上面代码没有处理完的情况下，GUI渲染线程能够继续向下执行；</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/*	度量一个程序的执行时间</span></span><br><span class="line"><span class="comment"> *	事后统计法——time/timeEnd可以记录一段程序执行的时间，受电脑性能和执行时候的换接状态影响;</span></span><br><span class="line"><span class="comment"> *  事前分析估算方法——时间复杂度O</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="built_in">console</span>.time(<span class="string">'AAA'</span>);</span><br><span class="line">...</span><br><span class="line"><span class="built_in">console</span>.timeEnd(<span class="string">'AAA'</span>);</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//setTimeout时间是0并不是立即执行，而是需要等待浏览器的最小反应时间</span></span><br><span class="line">setTimeout(<span class="function"><span class="params">()</span>=&gt;</span>&#123;</span><br><span class="line">    ...</span><br><span class="line">&#125;,<span class="number">0</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment">//练习</span></span><br><span class="line"><span class="built_in">console</span>.log(<span class="number">1</span>);</span><br><span class="line">setTimeout(<span class="function"><span class="params">()</span>=&gt;</span>&#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="number">2</span>);</span><br><span class="line">&#125;,<span class="number">1000</span>)</span><br><span class="line"><span class="built_in">console</span>.log(<span class="number">3</span>);</span><br><span class="line">setTimeout(<span class="function"><span class="params">()</span>=&gt;</span>&#123;</span><br><span class="line">   <span class="built_in">console</span>.log(<span class="number">4</span>); </span><br><span class="line">&#125;,<span class="number">0</span>)</span><br><span class="line"><span class="built_in">console</span>.log(<span class="number">5</span>);</span><br><span class="line"><span class="keyword">for</span>(<span class="keyword">let</span> i=<span class="number">0</span>;i&lt;<span class="number">99999999</span>;i++)&#123;</span><br><span class="line">    <span class="keyword">if</span>(i===<span class="number">99999998</span>)&#123;</span><br><span class="line">        <span class="built_in">console</span>.log(<span class="number">6</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="built_in">console</span>.log(<span class="number">7</span>);</span><br><span class="line"><span class="comment">//输出结果：1 3 5 6 7 4 2</span></span><br><span class="line"></span><br><span class="line"><span class="comment">//解析</span></span><br><span class="line">GUI渲染线程：自上而下执行代码</span><br><span class="line">=&gt; <span class="number">1</span></span><br><span class="line">=&gt; 设置定时器(<span class="number">1</span>s后执行函数A)——异步-&gt;放到事件队列/任务队列（Event Queue）——任务<span class="number">1</span>：<span class="number">1</span>s后执行函数A,浏览器会开辟一个监听时间的线程来监听时间是否到达;</span><br><span class="line">=&gt; <span class="number">3</span></span><br><span class="line">=&gt; 设置定时器(<span class="number">5</span>~<span class="number">6</span>ms执行函数B)——异步-&gt;放到事件队列/任务队列（Event Queue）——任务<span class="number">2</span>：<span class="number">5</span>~<span class="number">6</span>ms后执行函数B,监听</span><br><span class="line">=&gt; <span class="number">5</span></span><br><span class="line">=&gt; 循环执行(<span class="number">300</span>~<span class="number">400</span>ms)——同步</span><br><span class="line">	循环输出<span class="number">6</span>，循环过程中，任务队列中的任务<span class="number">2</span>已经到达执行时间，但是此时GUI渲染线程还没有自上而下渲染完，所以需要所有任务队列中的任务（哪怕到达时间的）继续等待;</span><br><span class="line">=&gt; <span class="number">7</span></span><br><span class="line">-------------------------------------空闲---------------------------------------------</span><br><span class="line">此时，GUI渲染线程自上而下执行完，空闲下来了。到任务队列中查找到达时间的能执行的放到GUI中去执行。如果有多个到达时间，谁先到谁先执行。</span><br><span class="line">任务<span class="number">2</span>执行(GUI忙)</span><br><span class="line">=&gt; <span class="number">4</span></span><br><span class="line">    代码执行完，GUI空闲，继续去任务队列中查找</span><br><span class="line">....</span><br><span class="line">Event Loop事件循环机制</span><br></pre></td></tr></table></figure>
+
+<p>总结：</p>
+<ol>
+<li><p>GUI渲染中遇到异步操作，都会先放在事件队列中；</p>
+</li>
+<li><p>JS是单线程的，一次执行做一件事情，所以GUI只要没有闲下来，就不能干其它事情（哪怕任务队列中的某些任务到达执行时间，也不会立即执行，需要等GUI闲下来）；</p>
+<p>定时器设置的等待时间是 最快的执行时间，到达时间后不一定能执行，需要看GUI有没有闲下来。比如饭店只有一个服务员，忙着给别的客人点菜，即使你的饭出来也不能端，只有闲下来才可以。</p>
+</li>
+<li><p>任务队列中的任务，最后也是拿到GUI线程中处理的，一个任务处理完才能继续处理下一个任务；</p>
+</li>
+</ol>
+<p>练习：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span>(<span class="keyword">var</span> i=<span class="number">0</span>;i&lt;<span class="number">5</span>;i++)&#123;</span><br><span class="line">	setTimeout(<span class="function"><span class="params">()</span>=&gt;</span>&#123;</span><br><span class="line">		<span class="built_in">console</span>.log(i);   </span><br><span class="line">	&#125;,<span class="number">0</span>)</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">//输出结果：5 5 5 5 5</span></span><br><span class="line"></span><br><span class="line"><span class="comment">//第一次循环：向任务队列插入一个定时器</span></span><br><span class="line"><span class="comment">//第二次循环：...</span></span><br><span class="line">..</span><br><span class="line"><span class="comment">//第五次循环：...</span></span><br><span class="line"><span class="comment">//循环结束【GUI空闲】  全局i=5 任务队列中有5个定时器</span></span><br><span class="line"><span class="comment">//定时器执行中遇到i，不是自己的则找全局的，输出5次5</span></span><br></pre></td></tr></table></figure>
+
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">setTimeout(<span class="function"><span class="params">()</span>=&gt;</span>&#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="number">1</span>);</span><br><span class="line">    <span class="keyword">while</span>(<span class="number">1</span>===<span class="number">1</span>)&#123;&#125;</span><br><span class="line">&#125;,<span class="number">10</span>)</span><br><span class="line"><span class="built_in">console</span>.log(<span class="number">2</span>);</span><br><span class="line"><span class="keyword">for</span>(<span class="keyword">let</span> i=<span class="number">0</span>;i&lt;<span class="number">90000000</span>;i++)&#123;</span><br><span class="line">   ... <span class="comment">//79ms</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">//循环结束时，任务1到达时间，任务1放到GUI中渲染，遇到死循环（GUI永远忙不完），所以4不执行</span></span><br><span class="line"><span class="built_in">console</span>.log(<span class="number">3</span>);</span><br><span class="line">setTimeout(<span class="function"><span class="params">()</span>=&gt;</span>&#123;</span><br><span class="line">   <span class="built_in">console</span>.log(<span class="number">4</span>); </span><br><span class="line">&#125;,<span class="number">5</span>)</span><br><span class="line"><span class="built_in">console</span>.log(<span class="number">5</span>);</span><br><span class="line"><span class="comment">//输出结果：2 3 5 1</span></span><br></pre></td></tr></table></figure>
+
+
+
+<h2 id="微任务和宏任务"><a href="#微任务和宏任务" class="headerlink" title="微任务和宏任务"></a>微任务和宏任务</h2><p>1、微任务优先级永远高于宏任务</p>
+<p>2、宏任务的优先级按照谁先达到执行的时间</p>
+<p>微任务：Promise / async / await</p>
+<p>宏任务：事件绑定 / 定时器 / ajax异步请求 / GUI渲染任务局</p>
+<p>先找微任务，只要还有微任务，则继续查找，一直到没有微任务了，才去宏任务队列中查找。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">await</span> async2();</span><br><span class="line"><span class="built_in">console</span>.log(<span class="number">123</span>);</span><br><span class="line"><span class="comment">//await是异步微任务，async2()先执行，当async返回成功状态后，把下面代码执行</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">new</span> <span class="built_in">Promise</span>(<span class="function"><span class="keyword">function</span>(<span class="params">resolve</span>)</span>&#123;</span><br><span class="line">	..</span><br><span class="line">	resolve();</span><br><span class="line">&#125;).then(<span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">	..</span><br><span class="line">&#125;)</span><br><span class="line"><span class="comment">//promise方法立即执行，resolve()是异步微任务，等待then把成功失败的方法放到池子里再通知方法执行</span></span><br><span class="line"><span class="comment">//resolve()控制then存放的方法执行</span></span><br></pre></td></tr></table></figure>
+
+
+
+<p>练习：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">async</span> <span class="function"><span class="keyword">function</span> <span class="title">async1</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">	<span class="built_in">console</span>.log(<span class="string">'async1 start'</span>);</span><br><span class="line">	<span class="keyword">await</span> async2();</span><br><span class="line">	<span class="built_in">console</span>.log(<span class="string">'async1 end'</span>);</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">async</span> <span class="function"><span class="keyword">function</span> <span class="title">async2</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">	<span class="built_in">console</span>.log(<span class="string">'async2'</span>);</span><br><span class="line">&#125;</span><br><span class="line"><span class="built_in">console</span>.log(<span class="string">'script start'</span>);</span><br><span class="line">setTimeout(<span class="function"><span class="keyword">function</span> (<span class="params"></span>) </span>&#123;</span><br><span class="line">	<span class="built_in">console</span>.log(<span class="string">'setTimeout'</span>);</span><br><span class="line">&#125;, <span class="number">0</span>)</span><br><span class="line">async1();</span><br><span class="line"><span class="keyword">new</span> <span class="built_in">Promise</span>(<span class="function"><span class="keyword">function</span> (<span class="params">resolve</span>) </span>&#123;</span><br><span class="line">	<span class="built_in">console</span>.log(<span class="string">'promise1'</span>);</span><br><span class="line">	resolve();</span><br><span class="line">&#125;).then(<span class="function"><span class="keyword">function</span> (<span class="params"></span>) </span>&#123;</span><br><span class="line">	<span class="built_in">console</span>.log(<span class="string">'promise2'</span>);</span><br><span class="line">&#125;);</span><br><span class="line"><span class="built_in">console</span>.log(<span class="string">'script end'</span>);</span><br><span class="line"><span class="comment">//输出结果：</span></span><br></pre></td></tr></table></figure>
+
+<p>一张图带你看整个流程：</p>
+<p><img src="/img/blog/render/%E5%AE%8F%E4%BB%BB%E5%8A%A1%E5%92%8C%E5%BE%AE%E4%BB%BB%E5%8A%A1.png" alt=""></p>
+</article><!-- lincense--><div class="post-paginator"><a class="prevSlogan" href="/2020/07/15/JS%E6%95%B0%E6%8D%AE%E7%B1%BB%E5%9E%8B%E4%BB%A5%E5%8F%8A%E7%B1%BB%E5%9E%8B%E8%BD%AC%E6%8D%A2%E6%A2%B3%E7%90%86/" title="JS数据类型以及类型转换梳理"><span>< PreviousPost</span><br><span class="prevTitle">JS数据类型以及类型转换梳理</span></a><a class="nextSlogan" href="/2020/06/30/%E5%8F%98%E9%87%8F%E6%8F%90%E5%8D%87/" title="变量提升"><span>NextPost ></span><br><span class="nextTitle">变量提升</span></a><div class="clear"></div></div><div id="comment"></div></section></article><footer id="cxo-footer-outer"><div id="cxo-footer-inner"><p class="footer-container"><span>Site by </span><a href="http://hexo.io" target="_blank" rel="noopener"><span>Hexo</span></a><span> | theme </span><a href="https://github.com/Longlongyu/hexo-theme-Cxo" target="_blank" rel="noopener"><span>Cxo</span></a></p><i class="fa fa-user"> </i><span id="busuanzi_value_site_uv"></span><span> | </span><i class="fa fa-eye"> </i><span id="busuanzi_value_site_pv"></span></div></footer><!-- catelog--><div class="toc-wrapper" style="top: 70vh;"><div class="toc-catalog"><i class="fa fa-list"> </i><span>CATALOG</span></div><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#同步异步编程"><span class="toc-number">1.</span> <span class="toc-text">同步异步编程</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#微任务和宏任务"><span class="toc-number">2.</span> <span class="toc-text">微任务和宏任务</span></a></li></ol></div><!-- top--><i class="fa fa-arrow-up close" id="go-up" aria-hidden="true"></i></body></html>
