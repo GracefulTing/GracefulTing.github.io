@@ -53,6 +53,8 @@
 
 3. **let能解决typeof检测时出现的暂时性死区问题（let比var更严谨）；**
 
+   暂时性死区：检测一个未被声明过的变量不会报错，结果是undefined；
+
    ```javascript
    console.log(typeof a);   //undefined
    //浏览器bug，本应该报错因为没有a(暂时性死区)
@@ -269,10 +271,12 @@ if(!("a" in window)){ //("a" in window) -> true -> !true = false -> 条件不成
 console.log(a);  //undefined
 ```
 
-> **arguments**：函数内置的实参集合，箭头函数中没有arguments，不管是否定义了形参，也不管传递了多少实参，arguments中包含所有传递的实参信息（类数组集合）；
+> **arguments**：函数内置的实参集合，箭头函数中没有arguments，不管是否定义了形参，也不管传递了多少实参，arguments中包含所有传递的实参信息（类数组集合），不传递实参是一个空的类数组集合；
 >
 > - 在js非严格模式下，arguments和形参存在映射关系（一个改都会跟着改）；
 > - 严格模式下，arguments和形参的映射机制就切断了
+>
+> 映射机制是在函数代码执行前完成的，那会建立了映射就有映射，如果此时没建立，映射机制后续就不会再有了。
 
 ```javascript
 /*	全局作用域
@@ -307,6 +311,14 @@ function b(x,y,a){
     console.log(a);//3
 }
 b(1,2,3); 
+
+//映射机制是在函数代码执行前完成的，那会建立了映射就有映射，如果此时没建立，映射机制后续就不会再有了。
+var a = 4;
+function b(x,y,a){
+    a = 3;
+    console.log(arguments[2]);   //undefined
+}
+a = b(1,2);  //传递2个参数，第三个无映射
 ```
 
 

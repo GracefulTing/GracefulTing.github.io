@@ -2,7 +2,7 @@
 
 > 函数执行的主体，也就是谁执行函数，那么执行主体就是谁。this是谁和函数在哪创建的或者在哪执行都没有必然的联系。
 
-1. 给元素的某个事件绑定方法，当事件触发方法执行的时候，方法中的this是当前操作的元素本身。
+1. 给元素的某个事件绑定方法，当事件触发方法执行的时候，方法中的this是当前操作的元素本身。（特殊：IE6~8中基于DOM2事件绑定attachEvent方法中的this不是元素）
 
    ```javascript
    var name = '张三';
@@ -17,7 +17,11 @@
    fn();//张三   this -> window(非严格模式，严格模式是undefined)
    ```
 
-2. 如何确定执行主体（this）是谁？当方法执行的时候，看方法前面是否有点，没有点this是window或者undefined；有点，点前面是谁this就是谁。
+2. 如何确定执行主体（this）是谁？当方法执行的时候，看方法前面是否有点，没有点this是window(非严格模式)或者undefined(严格模式)；有点，点前面是谁this就是谁。
+
+   自执行函数中的this是window或undefined。
+
+   回调函数中this一般也是window / undefined（除非某个函数内部给回调函数做了特殊的处理）
 
    ```js
    //情况1
@@ -34,7 +38,7 @@
                //fn等于这个返回的小函数
                //this:obj
            }
-       })(10)
+       })(10)   //自治性函数只有给fn赋值时执行一次，后期执行obj.fn执行的是返回的小函数
    }
    obj.fn();
    
@@ -61,7 +65,13 @@
    let f = new Fn();
    ```
 
-4. 练习-this指向（根据规则判断）
+4. 箭头函数中（私有块级上下文）没有自己的this，所用到的this都是其上级上下文中的this（也就是没有初始化this这一步）。
+
+5. 基于call / apply / bind 可以强制改变this。
+
+   
+
+   练习-this指向（根据规则判断）
 
    ```javascript
    //练习1
@@ -109,14 +119,15 @@
    
    //练习4
    (function(){
+      //this ->  window
       var val = 1;
       var json = {
           val:10,
           dbl:function(){
-              val*=2; //上级作用域(栈)——全局作用域
+              val*=2; //是一个变量，非私有，找上级作用域(栈)——全局作用域
           }
       }
-      json.dbl();//this->json->val=2
+      json.dbl();//this->json   => val=2
       alert(json.val+val);//"12"
    })()
    
@@ -130,7 +141,31 @@
    (foo.bar)();//this->window
    ```
 
-5. 综合练习
+   
+
+   综合练习
+
+   ```javascript
+   var num = 10;
+   var obj = {
+       num: 20
+   };
+   obj.fn = (function (num) {
+       this.num = num * 3;
+       num++;
+       return function (n) {
+           this.num += n;
+           num++;
+           console.log(num);
+       }
+   })(obj.num);
+   var fn = obj.fn;
+   fn(5);
+   obj.fn(10);
+   console.log(num, obj.num);
+   ```
+
+   解析：
 
    ```javascript
    /*
@@ -185,9 +220,9 @@
        }
    }(obj.num);
    var fn = obj.fn;
-   fn(5);
-   obj.fn(10);
-   console.log(num,obj.num);
+   fn(5);   //22
+   obj.fn(10);   //23
+   console.log(num,obj.num);   //65  30
    ```
 
 
