@@ -1,0 +1,131 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"><meta name="author" content="GracefulTing"><meta name="renderer" content="webkit"><meta name="copyright" content="GracefulTing"><meta name="keywords" content="Welcome to GracefulTing's blog"><meta name="description" content=""><meta name="Cache-Control" content="no-cache"><meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"><title>JS高阶编程 · GracefulTing's Blog</title><link rel="stylesheet" href="/css/style.css?v=2018.7.9"><link rel="stylesheet" href="/css/animation.css?v=2018.7.9"><link rel="icon" href="/img/assets/favicon.ico"><link rel="stylesheet" href="https://cdn.bootcss.com/font-awesome/4.7.0/css/font-awesome.min.css?version=1.5.6"><!-- scripts--><script>(function( w ){
+  "use strict";
+  // rel=preload support test
+  if( !w.loadCSS ){
+    w.loadCSS = function(){};
+  }
+  // define on the loadCSS obj
+  var rp = loadCSS.relpreload = {};
+  // rel=preload feature support test
+  // runs once and returns a function for compat purposes
+  rp.support = (function(){
+    var ret;
+    try {
+      ret = w.document.createElement( "link" ).relList.supports( "preload" );
+    } catch (e) {
+      ret = false;
+    }
+    return function(){
+      return ret;
+    };
+  })();
+
+  // if preload isn't supported, get an asynchronous load by using a non-matching media attribute
+  // then change that media back to its intended value on load
+  rp.bindMediaToggle = function( link ){
+    // remember existing media attr for ultimate state, or default to 'all'
+    var finalMedia = link.media || "all";
+
+    function enableStylesheet(){
+      link.media = finalMedia;
+    }
+
+    // bind load handlers to enable media
+    if( link.addEventListener ){
+      link.addEventListener( "load", enableStylesheet );
+    } else if( link.attachEvent ){
+      link.attachEvent( "onload", enableStylesheet );
+    }
+
+    // Set rel and non-applicable media type to start an async request
+    // note: timeout allows this to happen async to let rendering continue in IE
+    setTimeout(function(){
+      link.rel = "stylesheet";
+      link.media = "only x";
+    });
+    // also enable media after 3 seconds,
+    // which will catch very old browsers (android 2.x, old firefox) that don't support onload on link
+    setTimeout( enableStylesheet, 3000 );
+  };
+
+  // loop through link elements in DOM
+  rp.poly = function(){
+    // double check this to prevent external calls from running
+    if( rp.support() ){
+      return;
+    }
+    var links = w.document.getElementsByTagName( "link" );
+    for( var i = 0; i < links.length; i++ ){
+      var link = links[ i ];
+      // qualify links to those with rel=preload and as=style attrs
+      if( link.rel === "preload" && link.getAttribute( "as" ) === "style" && !link.getAttribute( "data-loadcss" ) ){
+        // prevent rerunning on link
+        link.setAttribute( "data-loadcss", true );
+        // bind listeners to toggle media back
+        rp.bindMediaToggle( link );
+      }
+    }
+  };
+
+  // if unsupported, run the polyfill
+  if( !rp.support() ){
+    // run once at least
+    rp.poly();
+
+    // rerun poly on an interval until onload
+    var run = w.setInterval( rp.poly, 500 );
+    if( w.addEventListener ){
+      w.addEventListener( "load", function(){
+        rp.poly();
+        w.clearInterval( run );
+      } );
+    } else if( w.attachEvent ){
+      w.attachEvent( "onload", function(){
+        rp.poly();
+        w.clearInterval( run );
+      } );
+    }
+  }
+
+
+  // commonjs
+  if( typeof exports !== "undefined" ){
+    exports.loadCSS = loadCSS;
+  }
+  else {
+    w.loadCSS = loadCSS;
+  }
+}( typeof global !== "undefined" ? global : this ) );</script><script src="https://cdn.jsdelivr.net/npm/jquery@3.3.1/dist/jquery.min.js" defer></script><script src="/js/main.js?v=2018.7.9" defer></script><!-- fancybox--><link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.2.5/jquery.fancybox.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'"><script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.2.5/jquery.fancybox.min.js" defer></script><!-- busuanzi--><script async src="//dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script><meta name="generator" content="Hexo 4.2.1"></head><body><section class="profile-close" id="cxo-profile"><div class="profile-avatar"><i class="fa fa-caret-left"></i><img src="/img/assets/cat.png"></div><!--.profile-saying
+  i.fa.fa-comment
+  .saying--><div class="cxo-profile-inner"><div class="profile-name">Grace</div><div class="profile-signature">The harder, the more fortunate</div><div class="read-progress"></div></div></section><header id="cxo-intro" style="height: 70vh;background-image: url(/img/intro/index-bg.png);"><nav id="cxo-intro-nav"><section><div class="intro-nav-title"><a href="/">GracefulTing's Blog</a></div><div class="intro-nav-label-box"><a href="/">Home</a><a href="/about/">About</a><a href="/archives/">Archives</a><a href="/tags/">Tags</a></div><i class="fa fa-bars intro-nav-menu"><div class="intro-nav-drop"><a href="/">Home</a><a href="/about/">About</a><a href="/archives/">Archives</a><a href="/tags/">Tags</a></div></i><div class="clear"></div></section></nav><h1 class="post-title">JS高阶编程</h1><div class="post-intros"><div class="post-intro-meta"><span class="post-intro-time"><i class="post-intro-calendar fa fa-calendar"></i><span>2020-07-19</span></span></div></div></header><article class="cxo-up" id="cxo-content-outer"><section id="cxo-content-inner"><article class="article-entry" id="post"><h3 id="单例设计模式"><a href="#单例设计模式" class="headerlink" title="单例设计模式"></a>单例设计模式</h3><blockquote>
+<p>概念：用单独的实例来管理当前事务的相关特征（属性和方法），类似于实现一个分组的特点，而此时obj1和obj2不仅仅叫做一个对象，也被称为命名空间。</p>
+</blockquote>
+<p>基于闭包管控的单例模式称为：高级单例模式，以此来实现早期的模块划分（最早的模块化思想）；</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> <span class="built_in">module</span> = (<span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">function</span> <span class="title">query</span>(<span class="params"></span>)</span>&#123;&#125;</span><br><span class="line">    <span class="function"><span class="keyword">function</span> <span class="title">tools</span>(<span class="params"></span>)</span>&#123;&#125;</span><br><span class="line">    <span class="keyword">return</span> &#123;</span><br><span class="line">        name:<span class="string">'test'</span>,</span><br><span class="line">        tools:tools</span><br><span class="line">    &#125;</span><br><span class="line">&#125;)();</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="惰性思想-（函数重构）"><a href="#惰性思想-（函数重构）" class="headerlink" title="惰性思想  （函数重构）"></a>惰性思想  （函数重构）</h3><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//下面方法只判断一次，不需要执行几次就重复判断几次</span></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">getCss</span>(<span class="params">el,attr</span>)</span>&#123;</span><br><span class="line">    <span class="comment">//'name' in obj——检测当前属性name是否为obj的一个属性</span></span><br><span class="line">    <span class="keyword">if</span>(<span class="string">'getComputedStyle'</span> <span class="keyword">in</span> <span class="built_in">window</span>)&#123;</span><br><span class="line">        getCss = <span class="function"><span class="keyword">function</span> (<span class="params">el,attr</span>)</span>&#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="built_in">window</span>.getComputedStyle(el)[attr];</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;<span class="keyword">else</span>&#123;</span><br><span class="line">        getCss = <span class="function"><span class="keyword">function</span> (<span class="params">el,attr</span>)</span>&#123;</span><br><span class="line">            <span class="keyword">return</span> el.currentStyle[attr];</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> getCss(el,attr);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">getCss(<span class="built_in">document</span>.body,<span class="string">'margin'</span>);</span><br><span class="line">getCss(<span class="built_in">document</span>.body,<span class="string">'padding'</span>);</span><br><span class="line">getCss(<span class="built_in">document</span>.body,<span class="string">'width'</span>);</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="柯理化函数"><a href="#柯理化函数" class="headerlink" title="柯理化函数"></a>柯理化函数</h3><blockquote>
+<p>概念：利用闭包的保存机制，把一些信息预先存储下来（预处理的思想）；</p>
+</blockquote>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> res = fn(<span class="number">1</span>,<span class="number">2</span>)(<span class="number">3</span>);</span><br><span class="line"><span class="built_in">console</span>.log(res); <span class="comment">//=&gt;6  1+2+3</span></span><br></pre></td></tr></table></figure>
+
+<p>解析：fn(1,2)先执行，紧接着执行..(3)，那么fn(1,2)需要返回一个函数去执行，所以return function(){…}</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">fn</span>(<span class="params">...outer</span>)</span>&#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="function"><span class="keyword">function</span> <span class="title">anonymous</span>(<span class="params">...inner</span>)</span>&#123;</span><br><span class="line">        <span class="keyword">let</span> params = outer.concat(inner);  <span class="comment">//外层和里层函数传递的所有值都合并在一起</span></span><br><span class="line">        <span class="keyword">return</span> params.reduce(<span class="function">(<span class="params">n,item</span>)=&gt;</span>&#123;</span><br><span class="line">           <span class="keyword">return</span> n + item; </span><br><span class="line">        &#125;,<span class="number">0</span>)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>知识延申：reduce</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//不传递第二个实参值</span></span><br><span class="line"><span class="keyword">let</span> arr = [<span class="number">1</span>,<span class="number">2</span>,<span class="number">3</span>,<span class="number">4</span>,<span class="number">5</span>];</span><br><span class="line"><span class="keyword">let</span> res = arr.reduce(<span class="function">(<span class="params">n,item</span>)=&gt;</span>&#123;</span><br><span class="line">    <span class="built_in">console</span>.log(n,item);   </span><br><span class="line">    <span class="comment">//第一次输出：1  2    第一次触发回调函数执行，n是第一项，item是第二项</span></span><br><span class="line">    <span class="comment">//第二次输出：3  3    第二次触发回调函数执行，n是上一次回调函数的返回结果，item继续向后遍历数组项</span></span><br><span class="line">    <span class="comment">//第三次输出：6  4    ...</span></span><br><span class="line">    <span class="comment">//第四次输出：10 5    第 m 次触发回调函数执行，n是 m-1 次回调函数的返回结果</span></span><br><span class="line">    <span class="keyword">return</span> n+item;  <span class="comment">//return信息会作为下一次回调函数执行n的结果</span></span><br><span class="line">&#125;)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment">//传递第二个实参值</span></span><br><span class="line"><span class="keyword">let</span> arr = [<span class="number">1</span>,<span class="number">2</span>,<span class="number">3</span>,<span class="number">4</span>,<span class="number">5</span>];</span><br><span class="line"><span class="keyword">let</span> res = arr.reduce(<span class="function">(<span class="params">n,item</span>)=&gt;</span>&#123;</span><br><span class="line">    <span class="built_in">console</span>.log(n,item);   </span><br><span class="line">    <span class="comment">//第一次输出：0  1    第一次触发回调函数执行，n是第二个参数值，item是数组第一项</span></span><br><span class="line">    <span class="comment">//第一次输出：1  2    第二次触发回调函数执行，n是上一次回调函数的返回结果，item继续向后遍历数组项</span></span><br><span class="line">    <span class="comment">//第二次输出：3  3    ...</span></span><br><span class="line">    <span class="comment">//第三次输出：6  4    ...</span></span><br><span class="line">    <span class="comment">//第四次输出：10 5    第 m 次触发回调函数执行，n是 m-1 次回调函数的返回结果</span></span><br><span class="line">    <span class="keyword">return</span> n+item;  <span class="comment">//return信息会作为下一次回调函数执行n的结果</span></span><br><span class="line">&#125;,<span class="number">0</span>)</span><br></pre></td></tr></table></figure>
+
+<p>回调函数：把一个函数作为值传递给另外一个函数，在另外一个函数中把这个函数执行（这是实现函数式编程重要的知识）；</p>
+<ul>
+<li>函数式编程：注重结果，不在乎过程，过程交给别人处理；（利用reduce去累加）</li>
+<li>命令式编程：注重过程，需要自己去实现过程；(自己去编写累加)</li>
+</ul>
+<h3 id="compose思想"><a href="#compose思想" class="headerlink" title="compose思想"></a>compose思想</h3><p>compose组合函数，把多层函数嵌套调用扁平化。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment">  ---------------------------------------------问题描述---------------------------------------------</span></span><br><span class="line"><span class="comment">  在函数式编程当中有一个很重要的概念就是函数组合， 实际上就是把处理数据的函数像管道一样连接起来， 然后让数据穿过管道得到最终的结果。 例如：</span></span><br><span class="line"><span class="comment">    const add1 = (x) =&gt; x + 1;</span></span><br><span class="line"><span class="comment">    const mul3 = (x) =&gt; x * 3;</span></span><br><span class="line"><span class="comment">    const div2 = (x) =&gt; x / 2;</span></span><br><span class="line"><span class="comment">    div2(mul3(add1(add1(0)))); //=&gt;3</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment">    而这样的写法可读性明显太差了，我们可以构建一个compose函数，它接受任意多个函数作为参数（这些函数都只接受一个参数），然后compose返回的也是一个函数，达到以下的效果：</span></span><br><span class="line"><span class="comment">    const operate = compose(div2, mul3, add1, add1)</span></span><br><span class="line"><span class="comment">    operate(0) //=&gt;相当于div2(mul3(add1(add1(0)))) </span></span><br><span class="line"><span class="comment">    operate(2) //=&gt;相当于div2(mul3(add1(add1(2))))</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment">    简而言之：compose可以把类似于f(g(h(x)))这种写法简化成compose(f, g, h)(x)，请你完成 compose函数的编写 </span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment">	------------------------------------------分析-------------------------------------------------</span></span><br><span class="line"><span class="comment">	compose函数执行后还可以继续执行，那么compose函数返回的是一个函数。</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> fn1 = <span class="function"><span class="params">x</span> =&gt;</span> x+<span class="number">10</span>;</span><br><span class="line"><span class="keyword">const</span> fn2 = <span class="function"><span class="params">x</span> =&gt;</span> x<span class="number">-10</span>;</span><br><span class="line"><span class="keyword">const</span> fn3 = <span class="function"><span class="params">x</span> =&gt;</span> x*<span class="number">10</span>;</span><br><span class="line"><span class="keyword">const</span> fn4 = <span class="function"><span class="params">x</span> =&gt;</span> x/<span class="number">10</span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">compose</span>(<span class="params">...funcs</span>)</span>&#123;</span><br><span class="line">    <span class="comment">//funcs:存储按照顺序执行的函数(数组) ------ [fn1,fn3,fn2,fn4]</span></span><br><span class="line">    <span class="keyword">return</span> <span class="function"><span class="keyword">function</span> <span class="title">anonymous</span>(<span class="params">...args</span>)</span>&#123;</span><br><span class="line">        <span class="comment">//args:存储第一个函数执行需要传递的实参信息(数组) ------ [10]</span></span><br><span class="line">        </span><br><span class="line">        <span class="keyword">if</span>(funcs.length===<span class="number">0</span>) <span class="keyword">return</span> args;</span><br><span class="line">        <span class="keyword">if</span>(funcs.length===<span class="number">1</span>) <span class="keyword">return</span> funcs[<span class="number">0</span>](...args);</span><br><span class="line">        <span class="keyword">return</span> funcs.reduce(<span class="function">(<span class="params">n,item</span>)=&gt;</span>&#123;</span><br><span class="line">           <span class="comment">//第一次n:第一个函数执行的实参   item是第一个函数</span></span><br><span class="line">           <span class="comment">//第二次n:上一次item执行的返回值，作为实参传递给下一个函数执行</span></span><br><span class="line">           <span class="keyword">return</span> <span class="built_in">Array</span>.isArray(n) ? item(...n) : item(n) ;</span><br><span class="line">        &#125;,args)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> res = compose(fn1,fn3,fn2,fn4)(<span class="number">10</span>);</span><br><span class="line"><span class="built_in">console</span>.log(res);</span><br></pre></td></tr></table></figure>
+
+</article><!-- lincense--><div class="post-paginator"><a class="nextSlogan" href="/2020/07/19/%E9%9D%A2%E5%90%91%E5%AF%B9%E8%B1%A1%E7%BC%96%E7%A8%8B/" title="面向对象编程"><span>NextPost ></span><br><span class="nextTitle">面向对象编程</span></a><div class="clear"></div></div><div id="comment"></div></section></article><footer id="cxo-footer-outer"><div id="cxo-footer-inner"><p class="footer-container"><span>Site by </span><a href="http://hexo.io" target="_blank" rel="noopener"><span>Hexo</span></a><span> | theme </span><a href="https://github.com/Longlongyu/hexo-theme-Cxo" target="_blank" rel="noopener"><span>Cxo</span></a></p><i class="fa fa-user"> </i><span id="busuanzi_value_site_uv"></span><span> | </span><i class="fa fa-eye"> </i><span id="busuanzi_value_site_pv"></span></div></footer><!-- catelog--><div class="toc-wrapper" style="top: 70vh;"><div class="toc-catalog"><i class="fa fa-list"> </i><span>CATALOG</span></div><ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#单例设计模式"><span class="toc-number">1.</span> <span class="toc-text">单例设计模式</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#惰性思想-（函数重构）"><span class="toc-number">2.</span> <span class="toc-text">惰性思想  （函数重构）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#柯理化函数"><span class="toc-number">3.</span> <span class="toc-text">柯理化函数</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#compose思想"><span class="toc-number">4.</span> <span class="toc-text">compose思想</span></a></li></ol></div><!-- top--><i class="fa fa-arrow-up close" id="go-up" aria-hidden="true"></i></body></html>

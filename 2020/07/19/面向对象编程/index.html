@@ -1,0 +1,160 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"><meta name="author" content="GracefulTing"><meta name="renderer" content="webkit"><meta name="copyright" content="GracefulTing"><meta name="keywords" content="Welcome to GracefulTing's blog"><meta name="description" content=""><meta name="Cache-Control" content="no-cache"><meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"><title>面向对象编程 · GracefulTing's Blog</title><link rel="stylesheet" href="/css/style.css?v=2018.7.9"><link rel="stylesheet" href="/css/animation.css?v=2018.7.9"><link rel="icon" href="/img/assets/favicon.ico"><link rel="stylesheet" href="https://cdn.bootcss.com/font-awesome/4.7.0/css/font-awesome.min.css?version=1.5.6"><!-- scripts--><script>(function( w ){
+  "use strict";
+  // rel=preload support test
+  if( !w.loadCSS ){
+    w.loadCSS = function(){};
+  }
+  // define on the loadCSS obj
+  var rp = loadCSS.relpreload = {};
+  // rel=preload feature support test
+  // runs once and returns a function for compat purposes
+  rp.support = (function(){
+    var ret;
+    try {
+      ret = w.document.createElement( "link" ).relList.supports( "preload" );
+    } catch (e) {
+      ret = false;
+    }
+    return function(){
+      return ret;
+    };
+  })();
+
+  // if preload isn't supported, get an asynchronous load by using a non-matching media attribute
+  // then change that media back to its intended value on load
+  rp.bindMediaToggle = function( link ){
+    // remember existing media attr for ultimate state, or default to 'all'
+    var finalMedia = link.media || "all";
+
+    function enableStylesheet(){
+      link.media = finalMedia;
+    }
+
+    // bind load handlers to enable media
+    if( link.addEventListener ){
+      link.addEventListener( "load", enableStylesheet );
+    } else if( link.attachEvent ){
+      link.attachEvent( "onload", enableStylesheet );
+    }
+
+    // Set rel and non-applicable media type to start an async request
+    // note: timeout allows this to happen async to let rendering continue in IE
+    setTimeout(function(){
+      link.rel = "stylesheet";
+      link.media = "only x";
+    });
+    // also enable media after 3 seconds,
+    // which will catch very old browsers (android 2.x, old firefox) that don't support onload on link
+    setTimeout( enableStylesheet, 3000 );
+  };
+
+  // loop through link elements in DOM
+  rp.poly = function(){
+    // double check this to prevent external calls from running
+    if( rp.support() ){
+      return;
+    }
+    var links = w.document.getElementsByTagName( "link" );
+    for( var i = 0; i < links.length; i++ ){
+      var link = links[ i ];
+      // qualify links to those with rel=preload and as=style attrs
+      if( link.rel === "preload" && link.getAttribute( "as" ) === "style" && !link.getAttribute( "data-loadcss" ) ){
+        // prevent rerunning on link
+        link.setAttribute( "data-loadcss", true );
+        // bind listeners to toggle media back
+        rp.bindMediaToggle( link );
+      }
+    }
+  };
+
+  // if unsupported, run the polyfill
+  if( !rp.support() ){
+    // run once at least
+    rp.poly();
+
+    // rerun poly on an interval until onload
+    var run = w.setInterval( rp.poly, 500 );
+    if( w.addEventListener ){
+      w.addEventListener( "load", function(){
+        rp.poly();
+        w.clearInterval( run );
+      } );
+    } else if( w.attachEvent ){
+      w.attachEvent( "onload", function(){
+        rp.poly();
+        w.clearInterval( run );
+      } );
+    }
+  }
+
+
+  // commonjs
+  if( typeof exports !== "undefined" ){
+    exports.loadCSS = loadCSS;
+  }
+  else {
+    w.loadCSS = loadCSS;
+  }
+}( typeof global !== "undefined" ? global : this ) );</script><script src="https://cdn.jsdelivr.net/npm/jquery@3.3.1/dist/jquery.min.js" defer></script><script src="/js/main.js?v=2018.7.9" defer></script><!-- fancybox--><link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.2.5/jquery.fancybox.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'"><script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.2.5/jquery.fancybox.min.js" defer></script><!-- busuanzi--><script async src="//dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script><meta name="generator" content="Hexo 4.2.1"></head><body><section class="profile-close" id="cxo-profile"><div class="profile-avatar"><i class="fa fa-caret-left"></i><img src="/img/assets/cat.png"></div><!--.profile-saying
+  i.fa.fa-comment
+  .saying--><div class="cxo-profile-inner"><div class="profile-name">Grace</div><div class="profile-signature">The harder, the more fortunate</div><div class="read-progress"></div></div></section><header id="cxo-intro" style="height: 70vh;background-image: url(/img/intro/index-bg.png);"><nav id="cxo-intro-nav"><section><div class="intro-nav-title"><a href="/">GracefulTing's Blog</a></div><div class="intro-nav-label-box"><a href="/">Home</a><a href="/about/">About</a><a href="/archives/">Archives</a><a href="/tags/">Tags</a></div><i class="fa fa-bars intro-nav-menu"><div class="intro-nav-drop"><a href="/">Home</a><a href="/about/">About</a><a href="/archives/">Archives</a><a href="/tags/">Tags</a></div></i><div class="clear"></div></section></nav><h1 class="post-title">面向对象编程</h1><div class="post-intros"><div class="post-intro-meta"><span class="post-intro-time"><i class="post-intro-calendar fa fa-calendar"></i><span>2020-07-19</span></span></div></div></header><article class="cxo-up" id="cxo-content-outer"><section id="cxo-content-inner"><article class="article-entry" id="post"><h3 id="面向对象编程（OOP）"><a href="#面向对象编程（OOP）" class="headerlink" title="面向对象编程（OOP）"></a>面向对象编程（OOP）</h3><p>html是标记语言</p>
+<p>对象：一种泛指，js中万物皆对象</p>
+<p>类：对象的一种细分</p>
+<p>实例：某一个类别中具体的事物</p>
+<p>具备Symbol(Symbol.iterator)属性的，说明它是可被迭代的数据结构 =&gt; 可以用ES6中的for of循环。</p>
+<h3 id="构造函数"><a href="#构造函数" class="headerlink" title="构造函数"></a>构造函数</h3><p><strong>构造函数相比普通函数的区别</strong>：</p>
+<ol>
+<li><p>构造函数执行，也具备普通函数执行的一面（也会像普通函数一样去执行）；</p>
+</li>
+<li><p>new函数执行的特殊性：</p>
+<ul>
+<li><p>私有上下文中要做的第一件事情是 “ 创建一个空对象【是当前类的实例对象】 “；———-开辟堆内存AF0</p>
+</li>
+<li><p>初始化this时，让上下文中的this指向创建的实例对象；———&gt; this执行堆地址AF0</p>
+</li>
+<li><p>即使函数中没有return，也会默认把创建的实例对象返回。如果有return且返回的是基本类型值，默认返回的还是实例；如果return返回的是引用类型值，则返回的不是实例，以return的为主；</p>
+</li>
+<li><p>let f = nw Func；   </p>
+<p>不加()，属于不带参数new（依然会执行函数，只是不能传递实参而已），创建出当前类的一个新实例。</p>
+<p>【带参数优先级：19               不带参数优先级：18】</p>
+</li>
+</ul>
+</li>
+<li><p>代码执行中遇到的this.xxx=xxx都是给当前实例对象设置的私有属性；</p>
+</li>
+<li><p>上下文中的私有变量和实例对象没有必然的关系；</p>
+</li>
+</ol>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">Func</span>(<span class="params">x,y</span>)</span>&#123;</span><br><span class="line">    <span class="keyword">let</span> sum = x + y;</span><br><span class="line">    <span class="keyword">this</span>.total = sum;</span><br><span class="line">    <span class="keyword">this</span>.say = <span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;&#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">let</span> fun1 = <span class="keyword">new</span> Func(<span class="number">1</span>,<span class="number">2</span>);</span><br><span class="line"><span class="built_in">console</span>.log(fun1);   <span class="comment">// Func &#123;total:3,say:f&#125;</span></span><br><span class="line"><span class="built_in">console</span>.log(fun1.sum);  <span class="comment">//undefined    sum是上下文中的私有变量，和实例没有必然的关系，只有this.xxx=xxx才是给实例设置的私有属性</span></span><br><span class="line"><span class="built_in">console</span>.log(fun1.total);  <span class="comment">//3</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> fun2 = <span class="keyword">new</span> Func;</span><br><span class="line"><span class="built_in">console</span>.log(fun2);   <span class="comment">// Func &#123;total:NaN,say:f&#125;</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">console</span>.log(fun1.say === fun2.say);  <span class="comment">//false    ----说明say为私有属性</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>验证某个属性是否为当前对象的属性</strong>：in   /   hasOwnProperty</p>
+<ul>
+<li>in——不论是私有还是公有，只要是它的属性结果就是true；</li>
+<li>hasOwnProperty——只有是它的私有属性，结果才是true；</li>
+</ul>
+<p><strong>检测当前实例是否属于当前类</strong>：instanceof</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">console</span>.log(fun2 <span class="keyword">instanceof</span> Func);</span><br></pre></td></tr></table></figure>
+
+<h3 id="面向对象"><a href="#面向对象" class="headerlink" title="面向对象"></a>面向对象</h3><p>三句话玩转面向对象</p>
+<ol>
+<li><p>每一个函数（构造函数[类]）都天生具备一个属性 “prototype原型” ，属性值是一个对象：存储当前类供实例调用的公共属性和方法；</p>
+</li>
+<li><p>在原型对象上有一个内置属性 “constructor构造函数” 存储的值是当前函数本身，所以我们把类称为构造函数；</p>
+</li>
+<li><p>每一个对象都天生具备一个属性 “ __ proto __隐式原型/原型链”，属性指向自己所属类的原型对象；</p>
+<p>实例.__ proto __ === 所属类.prototype</p>
+</li>
+</ol>
+<ul>
+<li>函数类型：普通函数 /  构造函数（类） / 内置类</li>
+<li>对象类型：普通对象 / 数组对象 / 正则对象 / 日期对象 / prototype / __ proto __  / 函数也是对象 / 类的实例也是对象（排除基本数据类型值的特殊性）/  万物皆对象</li>
+</ul>
+<p>Object作为所有对象的基类，它原型对象上的__ proto__要指也是指向自己的原型（也就是自己），这样没有意义，所以给其赋值为null.</p>
+<h3 id="原型链机制"><a href="#原型链机制" class="headerlink" title="原型链机制"></a>原型链机制</h3><blockquote>
+<p>概念：访问对象的某个成员，首先看是否为私有的，如果是私有的则找的就是私有的；如果不是，则基于__ proto __ 找所属类.prototype上的公共属性方法….如果还没有，则基于__ proto __继续向上查找，直到找到Object.prototype为止。</p>
+</blockquote>
+<p>原型上的属性方法：相对于实例来讲是公有的，相对于自己来讲是私有的；</p>
+<p>Object.create([Object])：创建一个空对象x，并且把[object]（这个值需要是个对象）作为新的空对象的原型链指向；</p>
+<p>x.__ proto __ = [Object]</p>
+<p>Object.create(null)：创建一个没有原型/原型链的空对象，不是任何类的实例；    </p>
+</article><!-- lincense--><div class="post-paginator"><a class="prevSlogan" href="/2020/07/19/JS%E9%AB%98%E9%98%B6%E7%BC%96%E7%A8%8B/" title="JS高阶编程"><span>< PreviousPost</span><br><span class="prevTitle">JS高阶编程</span></a><a class="nextSlogan" href="/2020/07/19/JQ%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB/" title="JQ源码解读"><span>NextPost ></span><br><span class="nextTitle">JQ源码解读</span></a><div class="clear"></div></div><div id="comment"></div></section></article><footer id="cxo-footer-outer"><div id="cxo-footer-inner"><p class="footer-container"><span>Site by </span><a href="http://hexo.io" target="_blank" rel="noopener"><span>Hexo</span></a><span> | theme </span><a href="https://github.com/Longlongyu/hexo-theme-Cxo" target="_blank" rel="noopener"><span>Cxo</span></a></p><i class="fa fa-user"> </i><span id="busuanzi_value_site_uv"></span><span> | </span><i class="fa fa-eye"> </i><span id="busuanzi_value_site_pv"></span></div></footer><!-- catelog--><div class="toc-wrapper" style="top: 70vh;"><div class="toc-catalog"><i class="fa fa-list"> </i><span>CATALOG</span></div><ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#面向对象编程（OOP）"><span class="toc-number">1.</span> <span class="toc-text">面向对象编程（OOP）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#构造函数"><span class="toc-number">2.</span> <span class="toc-text">构造函数</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#面向对象"><span class="toc-number">3.</span> <span class="toc-text">面向对象</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#原型链机制"><span class="toc-number">4.</span> <span class="toc-text">原型链机制</span></a></li></ol></div><!-- top--><i class="fa fa-arrow-up close" id="go-up" aria-hidden="true"></i></body></html>
