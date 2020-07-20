@@ -135,7 +135,7 @@
 <p><strong>检测当前实例是否属于当前类</strong>：instanceof</p>
 <figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">console</span>.log(fun2 <span class="keyword">instanceof</span> Func);</span><br></pre></td></tr></table></figure>
 
-<h3 id="面向对象"><a href="#面向对象" class="headerlink" title="面向对象"></a>面向对象</h3><p>三句话玩转面向对象</p>
+<h3 id=""><a href="#" class="headerlink" title=""></a></h3><h3 id="原型和原型链"><a href="#原型和原型链" class="headerlink" title="原型和原型链"></a>原型和原型链</h3><p>三句话玩转面向对象</p>
 <ol>
 <li><p>每一个函数（构造函数[类]）都天生具备一个属性 “prototype原型” ，属性值是一个对象：存储当前类供实例调用的公共属性和方法；</p>
 </li>
@@ -149,7 +149,13 @@
 <li>函数类型：普通函数 /  构造函数（类） / 内置类</li>
 <li>对象类型：普通对象 / 数组对象 / 正则对象 / 日期对象 / prototype / __ proto __  / 函数也是对象 / 类的实例也是对象（排除基本数据类型值的特殊性）/  万物皆对象</li>
 </ul>
-<p>Object作为所有对象的基类，它原型对象上的__ proto__要指也是指向自己的原型（也就是自己），这样没有意义，所以给其赋值为null.</p>
+<p>内置类的原型图：</p>
+<p><img src="img/blog/js/%E5%86%85%E7%BD%AE%E7%B1%BB%E7%9A%84%E5%8E%9F%E5%9E%8B%E5%9B%BE.png" alt=""></p>
+<p>知识点：</p>
+<ul>
+<li><strong>Object作为所有对象的基类，它原型对象上的__ proto__要指也是指向自己的原型（也就是自己），这样没有意义，所以给其赋值为null；</strong></li>
+<li>对象本身存储的键值对，相对于对象来讲是私有的属性；</li>
+</ul>
 <h3 id="原型链机制"><a href="#原型链机制" class="headerlink" title="原型链机制"></a>原型链机制</h3><blockquote>
 <p>概念：访问对象的某个成员，首先看是否为私有的，如果是私有的则找的就是私有的；如果不是，则基于__ proto __ 找所属类.prototype上的公共属性方法….如果还没有，则基于__ proto __继续向上查找，直到找到Object.prototype为止。</p>
 </blockquote>
@@ -157,4 +163,4 @@
 <p>Object.create([Object])：创建一个空对象x，并且把[object]（这个值需要是个对象）作为新的空对象的原型链指向；</p>
 <p>x.__ proto __ = [Object]</p>
 <p>Object.create(null)：创建一个没有原型/原型链的空对象，不是任何类的实例；    </p>
-</article><!-- lincense--><div class="post-paginator"><a class="prevSlogan" href="/2020/07/19/JS%E9%AB%98%E9%98%B6%E7%BC%96%E7%A8%8B/" title="JS高阶编程"><span>< PreviousPost</span><br><span class="prevTitle">JS高阶编程</span></a><a class="nextSlogan" href="/2020/07/19/JQ%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB/" title="JQ源码解读"><span>NextPost ></span><br><span class="nextTitle">JQ源码解读</span></a><div class="clear"></div></div><div id="comment"></div></section></article><footer id="cxo-footer-outer"><div id="cxo-footer-inner"><p class="footer-container"><span>Site by </span><a href="http://hexo.io" target="_blank" rel="noopener"><span>Hexo</span></a><span> | theme </span><a href="https://github.com/Longlongyu/hexo-theme-Cxo" target="_blank" rel="noopener"><span>Cxo</span></a></p><i class="fa fa-user"> </i><span id="busuanzi_value_site_uv"></span><span> | </span><i class="fa fa-eye"> </i><span id="busuanzi_value_site_pv"></span></div></footer><!-- catelog--><div class="toc-wrapper" style="top: 70vh;"><div class="toc-catalog"><i class="fa fa-list"> </i><span>CATALOG</span></div><ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#面向对象编程（OOP）"><span class="toc-number">1.</span> <span class="toc-text">面向对象编程（OOP）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#构造函数"><span class="toc-number">2.</span> <span class="toc-text">构造函数</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#面向对象"><span class="toc-number">3.</span> <span class="toc-text">面向对象</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#原型链机制"><span class="toc-number">4.</span> <span class="toc-text">原型链机制</span></a></li></ol></div><!-- top--><i class="fa fa-arrow-up close" id="go-up" aria-hidden="true"></i></body></html>
+</article><!-- lincense--><div class="post-paginator"><a class="prevSlogan" href="/2020/07/19/JS%E9%AB%98%E9%98%B6%E7%BC%96%E7%A8%8B/" title="JS高阶编程"><span>< PreviousPost</span><br><span class="prevTitle">JS高阶编程</span></a><a class="nextSlogan" href="/2020/07/19/JQ%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB/" title="JQ源码解读"><span>NextPost ></span><br><span class="nextTitle">JQ源码解读</span></a><div class="clear"></div></div><div id="comment"></div></section></article><footer id="cxo-footer-outer"><div id="cxo-footer-inner"><p class="footer-container"><span>Site by </span><a href="http://hexo.io" target="_blank" rel="noopener"><span>Hexo</span></a><span> | theme </span><a href="https://github.com/Longlongyu/hexo-theme-Cxo" target="_blank" rel="noopener"><span>Cxo</span></a></p><i class="fa fa-user"> </i><span id="busuanzi_value_site_uv"></span><span> | </span><i class="fa fa-eye"> </i><span id="busuanzi_value_site_pv"></span></div></footer><!-- catelog--><div class="toc-wrapper" style="top: 70vh;"><div class="toc-catalog"><i class="fa fa-list"> </i><span>CATALOG</span></div><ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#面向对象编程（OOP）"><span class="toc-number">1.</span> <span class="toc-text">面向对象编程（OOP）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#构造函数"><span class="toc-number">2.</span> <span class="toc-text">构造函数</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#"><span class="toc-number">3.</span> <span class="toc-text"></span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#原型和原型链"><span class="toc-number">4.</span> <span class="toc-text">原型和原型链</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#原型链机制"><span class="toc-number">5.</span> <span class="toc-text">原型链机制</span></a></li></ol></div><!-- top--><i class="fa fa-arrow-up close" id="go-up" aria-hidden="true"></i></body></html>
