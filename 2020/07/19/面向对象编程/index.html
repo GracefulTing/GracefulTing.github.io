@@ -199,7 +199,14 @@
 
 
 
-<h3 id="关于Function和Object两大内置类的关系"><a href="#关于Function和Object两大内置类的关系" class="headerlink" title="关于Function和Object两大内置类的关系"></a>关于Function和Object两大内置类的关系</h3><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">typeof</span> <span class="built_in">Function</span>.prototype --------- <span class="string">'function'</span></span><br></pre></td></tr></table></figure>
+<h3 id="关于Function和Object两大内置类的关系"><a href="#关于Function和Object两大内置类的关系" class="headerlink" title="关于Function和Object两大内置类的关系"></a>关于Function和Object两大内置类的关系</h3><p>函数也是对象：</p>
+<ul>
+<li>普通函数（作用域和作用域链）</li>
+<li>构造函数（类/实例/原型/原型链）</li>
+<li>普通对象（键值对）</li>
+</ul>
+<p>以上3种角色中，函数是主要角色；</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">typeof</span> <span class="built_in">Array</span>/<span class="built_in">Object</span> ------ <span class="string">'function'</span></span><br><span class="line"><span class="keyword">typeof</span> <span class="built_in">Function</span>.prototype --------- <span class="string">'function'</span></span><br></pre></td></tr></table></figure>
 
 <p>Function.prototype是一个匿名空函数 empty / anonomous，但是相关操作和其它原型对象没有任何区别。</p>
 <p>Function：每个函数都是它的实例；Object：每个对象都是它的实例；</p>
@@ -215,8 +222,9 @@
 <figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">Funtion <span class="keyword">instanceof</span>  <span class="built_in">Function</span> ----  True</span><br><span class="line"><span class="built_in">Function</span>.prototype === <span class="built_in">Function</span>.__proto__  ----True</span><br></pre></td></tr></table></figure>
 </li>
 <li><p>Object作为一个类（一个函数），它是Function的一个实例；Function虽然是函数（类），但它也是一个对象，所以它也是Object的一个实例；</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">Object</span> <span class="keyword">instanceof</span> <span class="built_in">Function</span> ------ <span class="literal">true</span></span><br><span class="line"><span class="built_in">Function</span> <span class="keyword">instanceof</span> <span class="built_in">Object</span> ------ <span class="literal">true</span></span><br></pre></td></tr></table></figure>
 </li>
-<li><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">Object</span>.__proto__.proto__ === <span class="built_in">Object</span>.prototype  ---- True</span><br></pre></td></tr></table></figure>
+<li><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">Object</span>.__proto__.__proto__ === <span class="built_in">Object</span>.prototype  ---- True</span><br></pre></td></tr></table></figure>
 </li>
 <li><p>在JS中的任何实例（任何值【除了值类型的值】）最后都可以基于自己的__ proto __找到Object.prototype，也就是所有的值都是Object的实例 =&gt; 万物皆对象；</p>
 </li>
