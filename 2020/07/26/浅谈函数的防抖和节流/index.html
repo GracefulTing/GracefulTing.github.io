@@ -1,0 +1,137 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"><meta name="author" content="GracefulTing"><meta name="renderer" content="webkit"><meta name="copyright" content="GracefulTing"><meta name="keywords" content="Welcome to GracefulTing's blog"><meta name="description" content=""><meta name="Cache-Control" content="no-cache"><meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"><title>浅谈函数的防抖和节流 · GracefulTing's Blog</title><link rel="stylesheet" href="/css/style.css?v=2018.7.9"><link rel="stylesheet" href="/css/animation.css?v=2018.7.9"><link rel="icon" href="/img/assets/favicon.ico"><link rel="stylesheet" href="https://cdn.bootcss.com/font-awesome/4.7.0/css/font-awesome.min.css?version=1.5.6"><!-- scripts--><script>(function( w ){
+  "use strict";
+  // rel=preload support test
+  if( !w.loadCSS ){
+    w.loadCSS = function(){};
+  }
+  // define on the loadCSS obj
+  var rp = loadCSS.relpreload = {};
+  // rel=preload feature support test
+  // runs once and returns a function for compat purposes
+  rp.support = (function(){
+    var ret;
+    try {
+      ret = w.document.createElement( "link" ).relList.supports( "preload" );
+    } catch (e) {
+      ret = false;
+    }
+    return function(){
+      return ret;
+    };
+  })();
+
+  // if preload isn't supported, get an asynchronous load by using a non-matching media attribute
+  // then change that media back to its intended value on load
+  rp.bindMediaToggle = function( link ){
+    // remember existing media attr for ultimate state, or default to 'all'
+    var finalMedia = link.media || "all";
+
+    function enableStylesheet(){
+      link.media = finalMedia;
+    }
+
+    // bind load handlers to enable media
+    if( link.addEventListener ){
+      link.addEventListener( "load", enableStylesheet );
+    } else if( link.attachEvent ){
+      link.attachEvent( "onload", enableStylesheet );
+    }
+
+    // Set rel and non-applicable media type to start an async request
+    // note: timeout allows this to happen async to let rendering continue in IE
+    setTimeout(function(){
+      link.rel = "stylesheet";
+      link.media = "only x";
+    });
+    // also enable media after 3 seconds,
+    // which will catch very old browsers (android 2.x, old firefox) that don't support onload on link
+    setTimeout( enableStylesheet, 3000 );
+  };
+
+  // loop through link elements in DOM
+  rp.poly = function(){
+    // double check this to prevent external calls from running
+    if( rp.support() ){
+      return;
+    }
+    var links = w.document.getElementsByTagName( "link" );
+    for( var i = 0; i < links.length; i++ ){
+      var link = links[ i ];
+      // qualify links to those with rel=preload and as=style attrs
+      if( link.rel === "preload" && link.getAttribute( "as" ) === "style" && !link.getAttribute( "data-loadcss" ) ){
+        // prevent rerunning on link
+        link.setAttribute( "data-loadcss", true );
+        // bind listeners to toggle media back
+        rp.bindMediaToggle( link );
+      }
+    }
+  };
+
+  // if unsupported, run the polyfill
+  if( !rp.support() ){
+    // run once at least
+    rp.poly();
+
+    // rerun poly on an interval until onload
+    var run = w.setInterval( rp.poly, 500 );
+    if( w.addEventListener ){
+      w.addEventListener( "load", function(){
+        rp.poly();
+        w.clearInterval( run );
+      } );
+    } else if( w.attachEvent ){
+      w.attachEvent( "onload", function(){
+        rp.poly();
+        w.clearInterval( run );
+      } );
+    }
+  }
+
+
+  // commonjs
+  if( typeof exports !== "undefined" ){
+    exports.loadCSS = loadCSS;
+  }
+  else {
+    w.loadCSS = loadCSS;
+  }
+}( typeof global !== "undefined" ? global : this ) );</script><script src="https://cdn.jsdelivr.net/npm/jquery@3.3.1/dist/jquery.min.js" defer></script><script src="/js/main.js?v=2018.7.9" defer></script><!-- fancybox--><link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.2.5/jquery.fancybox.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'"><script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.2.5/jquery.fancybox.min.js" defer></script><!-- busuanzi--><script async src="//dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script><meta name="generator" content="Hexo 4.2.1"></head><body><section class="profile-close" id="cxo-profile"><div class="profile-avatar"><i class="fa fa-caret-left"></i><img src="/img/assets/cat.png"></div><!--.profile-saying
+  i.fa.fa-comment
+  .saying--><div class="cxo-profile-inner"><div class="profile-name">Grace</div><div class="profile-signature">The harder, the more fortunate</div><div class="read-progress"></div></div></section><header id="cxo-intro" style="height: 70vh;background-image: url(/img/intro/index-bg.png);"><nav id="cxo-intro-nav"><section><div class="intro-nav-title"><a href="/">GracefulTing's Blog</a></div><div class="intro-nav-label-box"><a href="/">Home</a><a href="/about/">About</a><a href="/archives/">Archives</a><a href="/tags/">Tags</a></div><i class="fa fa-bars intro-nav-menu"><div class="intro-nav-drop"><a href="/">Home</a><a href="/about/">About</a><a href="/archives/">Archives</a><a href="/tags/">Tags</a></div></i><div class="clear"></div></section></nav><h1 class="post-title">浅谈函数的防抖和节流</h1><div class="post-intros"><div class="post-intro-meta"><span class="post-intro-time"><i class="post-intro-calendar fa fa-calendar"></i><span>2020-07-26</span></span></div></div></header><article class="cxo-up" id="cxo-content-outer"><section id="cxo-content-inner"><article class="article-entry" id="post"><h3 id="防抖（debounce）"><a href="#防抖（debounce）" class="headerlink" title="防抖（debounce）"></a>防抖（debounce）</h3><blockquote>
+<p><strong>所谓防抖，就是指触发事件后在 n 秒内函数只能执行一次，如果在 n 秒内又触发了事件，则会重新计算函数执行时间。</strong></p>
+</blockquote>
+<p>通俗点来说，就是指用户频繁触发的时候，只执行一次事件（执行第一次或最后一次）【可以设置频繁的间隔时间】。</p>
+<p><strong>目的</strong>：频繁触发中只执行一次；</p>
+<p><strong>应用场景</strong>：按钮点击</p>
+<p><strong>模拟情景</strong>：当点击按钮的时候，期望500ms后输出hello，那么如果在500ms内疯狂点击多次，会发现最后输出多次hello；</p>
+<p>那么如何在500ms内只触发一次事件，输出一次hello呢？</p>
+<p><strong>思路</strong>：设置间隔时间500ms，第一次点击后没有立即执行，等待500ms，观察500ms内是否触发了第二次，如果触发第二次就说明是频繁点击，不去执行函数，如果没有触发第二次则认为非频繁点击，此时去执行函数。依此类推观察第三次和第二次的间隔……</p>
+<p>在间隔时间内，只要频繁点击了就清空上次定时器，重新计时。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">func</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">'hello'</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">btn.onclick = <span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>实现</strong>：</p>
+<p>前面提到了时间间隔，那么需要借助setTimeout函数以及柯理化函数来实现，具体过程：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment"> *  debounce:实现函数的防抖（目的：频繁触发中只执行一次）</span></span><br><span class="line"><span class="comment"> *  @params</span></span><br><span class="line"><span class="comment"> *		func:需要执行的函数</span></span><br><span class="line"><span class="comment"> *		wait:检测防抖的间隔频率</span></span><br><span class="line"><span class="comment"> *		immediate:是否立即执行(true控制第一次触发时执行函数,默认false是以最后一次触发为准)</span></span><br><span class="line"><span class="comment"> *	@return</span></span><br><span class="line"><span class="comment"> *		返回一个可被调用执行的函数</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">debounce</span>(<span class="params">func, wait = <span class="number">500</span>, immediate = false</span>) </span>&#123;</span><br><span class="line"> 	<span class="keyword">let</span> timer = <span class="literal">null</span>;</span><br><span class="line"> 	<span class="keyword">return</span> <span class="function"><span class="keyword">function</span> <span class="title">anonymous</span>(<span class="params">...params</span>) </span>&#123;</span><br><span class="line">        <span class="comment">//判断立即执行的条件，并非immediate=true就立即执行，需要判断此时是否设置了定时器</span></span><br><span class="line">        <span class="comment">//只有第一次执行，需要判断timer的值来区分是第一次还是第二次</span></span><br><span class="line">  		<span class="keyword">let</span> now = immediate &amp;&amp; !timer; </span><br><span class="line">  		clearTimeout(timer);</span><br><span class="line">  		timer = setTimeout(<span class="function"><span class="params">()</span> =&gt;</span> &#123;</span><br><span class="line">   			timer = <span class="literal">null</span>;</span><br><span class="line">   			<span class="comment">// 执行函数:注意保持THIS和参数的完整度</span></span><br><span class="line">   			!immediate ? func.call(<span class="keyword">this</span>, ...params) : <span class="literal">null</span>;</span><br><span class="line">  		&#125;, wait);</span><br><span class="line">  		now ? func.call(<span class="keyword">this</span>, ...params) : <span class="literal">null</span>;</span><br><span class="line"> 	&#125;;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>最后调用我们实现的防抖函数测试效果，发现和预期效果一样：在500ms内多次点击仅执行一次事件，输出一次hello。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">btn.onclick = debounce(func);</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="节流（throttle）"><a href="#节流（throttle）" class="headerlink" title="节流（throttle）"></a>节流（throttle）</h3><blockquote>
+<p><strong>所谓节流，就是指连续触发事件但是在 n 秒中只执行一次函数。</strong></p>
+</blockquote>
+<p>通俗点来说，节流会缩减频率。        </p>
+<p><strong>目的</strong>：频繁触发中缩减频率；</p>
+<p><strong>应用场景</strong>：滚动条  window.onscroll  /   输入框实时搜索  /  onresize</p>
+<p><strong>模拟场景</strong>：页面中当滚动条滚动时，触发多次scroll事件，页面很长会执行几十次、几百次……</p>
+<p><strong>思路</strong>：如何缩减频率呢？可以设置一个执行间隔时间，比如500ms，也即是我们希望在指定时间间隔500ms内执行一次scroll事件，直到过了这个期限才重新生效，这样原本执行100次的可能只需要执行20次。</p>
+<p><strong>实现</strong>：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment"> * throttle：实现函数的节流（目的：频繁触发中缩减频率）</span></span><br><span class="line"><span class="comment"> * @params:</span></span><br><span class="line"><span class="comment"> *	 	func:需要执行的函数</span></span><br><span class="line"><span class="comment"> *   	wait:自己设定的间隔事件（频率）</span></span><br><span class="line"><span class="comment"> * @return</span></span><br><span class="line"><span class="comment"> * 		返回一个可被调用执行的函数</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">throttle</span>(<span class="params">func, wait = <span class="number">500</span></span>) </span>&#123;</span><br><span class="line"> 	<span class="keyword">let</span> timer = <span class="literal">null</span>,</span><br><span class="line">  		previous = <span class="number">0</span>;  <span class="comment">//记录上一次操作时间</span></span><br><span class="line"> 	<span class="keyword">return</span> <span class="function"><span class="keyword">function</span> <span class="title">anonymous</span>(<span class="params">...params</span>) </span>&#123;</span><br><span class="line">  		<span class="keyword">let</span> now = <span class="keyword">new</span> <span class="built_in">Date</span>(), <span class="comment">//当前操作的时间</span></span><br><span class="line">   			remaining = wait - (now - previous);   <span class="comment">//剩余时间</span></span><br><span class="line">  		<span class="keyword">if</span> (remaining &lt;= <span class="number">0</span>) &#123;</span><br><span class="line">  			<span class="comment">// 两次间隔时间超过频率，把方法执行</span></span><br><span class="line">   			clearTimeout(timer);</span><br><span class="line">   			timer = <span class="literal">null</span>;</span><br><span class="line">   			previous = now;</span><br><span class="line">   			func.call(<span class="keyword">this</span>, ...params);</span><br><span class="line">  		&#125; <span class="keyword">else</span> <span class="keyword">if</span> (!timer) &#123;  <span class="comment">//当前定时器不存在才设置,防止多次设置定时器</span></span><br><span class="line">   			<span class="comment">// 两次间隔时间没有超过频率，说明还没有达到触发标准，设置定时器等待（还差多久等多久）</span></span><br><span class="line">   			timer = setTimeout(<span class="function"><span class="params">()</span> =&gt;</span> &#123;</span><br><span class="line">    			clearTimeout(timer);</span><br><span class="line">    			timer = <span class="literal">null</span>;</span><br><span class="line">    			previous = <span class="keyword">new</span> <span class="built_in">Date</span>();</span><br><span class="line">    			func.call(<span class="keyword">this</span>, ...params);</span><br><span class="line">   			&#125;, remaining);</span><br><span class="line">  		&#125;</span><br><span class="line"> 	&#125;;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="防抖和节流的区别"><a href="#防抖和节流的区别" class="headerlink" title="防抖和节流的区别"></a>防抖和节流的区别</h3><p>防抖：防止抖动—–执行一次（次数）<br>节流：降低频率—–执行多次（频率）</p>
+<p>一句话可以概括为：防抖是将多次执行变为第一次执行或最后一次执行，节流是将多次执行变为每隔一段时间执行。</p>
+<p>相同点：防抖和节流都能有效减少浏览器引擎的损耗，防止出现页面堵塞卡顿现象。</p>
+</article><!-- lincense--><div class="post-paginator"><a class="nextSlogan" href="/2020/07/26/Call%20&amp;%20Apply%20&amp;%20Bind%E7%9A%84%E7%94%A8%E6%B3%95%E5%92%8C%E5%8C%BA%E5%88%AB/" title="Call &amp; Apply &amp; Bind的用法和区别"><span>NextPost ></span><br><span class="nextTitle">Call &amp; Apply &amp; Bind的用法和区别</span></a><div class="clear"></div></div><div id="comment"></div></section></article><footer id="cxo-footer-outer"><div id="cxo-footer-inner"><p class="footer-container"><span>Site by </span><a href="http://hexo.io" target="_blank" rel="noopener"><span>Hexo</span></a><span> | theme </span><a href="https://github.com/Longlongyu/hexo-theme-Cxo" target="_blank" rel="noopener"><span>Cxo</span></a></p><i class="fa fa-user"> </i><span id="busuanzi_value_site_uv"></span><span> | </span><i class="fa fa-eye"> </i><span id="busuanzi_value_site_pv"></span></div></footer><!-- catelog--><div class="toc-wrapper" style="top: 70vh;"><div class="toc-catalog"><i class="fa fa-list"> </i><span>CATALOG</span></div><ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#防抖（debounce）"><span class="toc-number">1.</span> <span class="toc-text">防抖（debounce）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#节流（throttle）"><span class="toc-number">2.</span> <span class="toc-text">节流（throttle）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#防抖和节流的区别"><span class="toc-number">3.</span> <span class="toc-text">防抖和节流的区别</span></a></li></ol></div><!-- top--><i class="fa fa-arrow-up close" id="go-up" aria-hidden="true"></i></body></html>

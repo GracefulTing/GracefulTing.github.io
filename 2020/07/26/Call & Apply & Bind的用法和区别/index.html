@@ -1,0 +1,160 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"><meta name="author" content="GracefulTing"><meta name="renderer" content="webkit"><meta name="copyright" content="GracefulTing"><meta name="keywords" content="Welcome to GracefulTing's blog"><meta name="description" content=""><meta name="Cache-Control" content="no-cache"><meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"><title>Call &amp; Apply &amp; Bind的用法和区别 · GracefulTing's Blog</title><link rel="stylesheet" href="/css/style.css?v=2018.7.9"><link rel="stylesheet" href="/css/animation.css?v=2018.7.9"><link rel="icon" href="/img/assets/favicon.ico"><link rel="stylesheet" href="https://cdn.bootcss.com/font-awesome/4.7.0/css/font-awesome.min.css?version=1.5.6"><!-- scripts--><script>(function( w ){
+  "use strict";
+  // rel=preload support test
+  if( !w.loadCSS ){
+    w.loadCSS = function(){};
+  }
+  // define on the loadCSS obj
+  var rp = loadCSS.relpreload = {};
+  // rel=preload feature support test
+  // runs once and returns a function for compat purposes
+  rp.support = (function(){
+    var ret;
+    try {
+      ret = w.document.createElement( "link" ).relList.supports( "preload" );
+    } catch (e) {
+      ret = false;
+    }
+    return function(){
+      return ret;
+    };
+  })();
+
+  // if preload isn't supported, get an asynchronous load by using a non-matching media attribute
+  // then change that media back to its intended value on load
+  rp.bindMediaToggle = function( link ){
+    // remember existing media attr for ultimate state, or default to 'all'
+    var finalMedia = link.media || "all";
+
+    function enableStylesheet(){
+      link.media = finalMedia;
+    }
+
+    // bind load handlers to enable media
+    if( link.addEventListener ){
+      link.addEventListener( "load", enableStylesheet );
+    } else if( link.attachEvent ){
+      link.attachEvent( "onload", enableStylesheet );
+    }
+
+    // Set rel and non-applicable media type to start an async request
+    // note: timeout allows this to happen async to let rendering continue in IE
+    setTimeout(function(){
+      link.rel = "stylesheet";
+      link.media = "only x";
+    });
+    // also enable media after 3 seconds,
+    // which will catch very old browsers (android 2.x, old firefox) that don't support onload on link
+    setTimeout( enableStylesheet, 3000 );
+  };
+
+  // loop through link elements in DOM
+  rp.poly = function(){
+    // double check this to prevent external calls from running
+    if( rp.support() ){
+      return;
+    }
+    var links = w.document.getElementsByTagName( "link" );
+    for( var i = 0; i < links.length; i++ ){
+      var link = links[ i ];
+      // qualify links to those with rel=preload and as=style attrs
+      if( link.rel === "preload" && link.getAttribute( "as" ) === "style" && !link.getAttribute( "data-loadcss" ) ){
+        // prevent rerunning on link
+        link.setAttribute( "data-loadcss", true );
+        // bind listeners to toggle media back
+        rp.bindMediaToggle( link );
+      }
+    }
+  };
+
+  // if unsupported, run the polyfill
+  if( !rp.support() ){
+    // run once at least
+    rp.poly();
+
+    // rerun poly on an interval until onload
+    var run = w.setInterval( rp.poly, 500 );
+    if( w.addEventListener ){
+      w.addEventListener( "load", function(){
+        rp.poly();
+        w.clearInterval( run );
+      } );
+    } else if( w.attachEvent ){
+      w.attachEvent( "onload", function(){
+        rp.poly();
+        w.clearInterval( run );
+      } );
+    }
+  }
+
+
+  // commonjs
+  if( typeof exports !== "undefined" ){
+    exports.loadCSS = loadCSS;
+  }
+  else {
+    w.loadCSS = loadCSS;
+  }
+}( typeof global !== "undefined" ? global : this ) );</script><script src="https://cdn.jsdelivr.net/npm/jquery@3.3.1/dist/jquery.min.js" defer></script><script src="/js/main.js?v=2018.7.9" defer></script><!-- fancybox--><link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.2.5/jquery.fancybox.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'"><script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.2.5/jquery.fancybox.min.js" defer></script><!-- busuanzi--><script async src="//dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script><meta name="generator" content="Hexo 4.2.1"></head><body><section class="profile-close" id="cxo-profile"><div class="profile-avatar"><i class="fa fa-caret-left"></i><img src="/img/assets/cat.png"></div><!--.profile-saying
+  i.fa.fa-comment
+  .saying--><div class="cxo-profile-inner"><div class="profile-name">Grace</div><div class="profile-signature">The harder, the more fortunate</div><div class="read-progress"></div></div></section><header id="cxo-intro" style="height: 70vh;background-image: url(/img/intro/index-bg.png);"><nav id="cxo-intro-nav"><section><div class="intro-nav-title"><a href="/">GracefulTing's Blog</a></div><div class="intro-nav-label-box"><a href="/">Home</a><a href="/about/">About</a><a href="/archives/">Archives</a><a href="/tags/">Tags</a></div><i class="fa fa-bars intro-nav-menu"><div class="intro-nav-drop"><a href="/">Home</a><a href="/about/">About</a><a href="/archives/">Archives</a><a href="/tags/">Tags</a></div></i><div class="clear"></div></section></nav><h1 class="post-title">Call &amp; Apply &amp; Bind的用法和区别</h1><div class="post-intros"><div class="post-intro-meta"><span class="post-intro-time"><i class="post-intro-calendar fa fa-calendar"></i><span>2020-07-26</span></span></div></div></header><article class="cxo-up" id="cxo-content-outer"><section id="cxo-content-inner"><article class="article-entry" id="post"><p>函数原型链中的 apply，call 和 bind 方法是 JavaScript 中相当重要的概念，它们都是用来改变函数中的this指向。那关于它们的用法、区别和内部实现，你都知道吗？</p>
+<h3 id="call"><a href="#call" class="headerlink" title="call"></a>call</h3><blockquote>
+<p>函数基于原型链找到Function.prototype.call方法，并且把它执行，在方法执行时完成了一些功能：</p>
+<ul>
+<li>让当前函数执行；</li>
+<li>把函数中的this指向改为第一个传递的实参；</li>
+<li>把传递给call其余的实参当作参数传递给当前函数；</li>
+</ul>
+<p>如果一个参数都没有，非严格模式下是让函数中的this指向window，严格模式下指向的是Undefined.</p>
+</blockquote>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">window</span>.name = <span class="string">'window'</span>;</span><br><span class="line"><span class="keyword">let</span> obj = &#123;<span class="attr">name</span>:<span class="string">'张三'</span>&#125;;</span><br><span class="line"><span class="keyword">let</span> fn = <span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="keyword">this</span>.name);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">fn();  <span class="comment">//=&gt; this:window    输出'window'  严格模式=&gt; undefined</span></span><br><span class="line"><span class="comment">//obj.fn();  //报错 obj.fn is not a function =&gt;  obj中没有fn属性</span></span><br></pre></td></tr></table></figure>
+
+<p>需求：如何让fn执行时this指向obj呢？</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">obj.fn = fn;</span><br><span class="line">obj.fn();</span><br><span class="line"><span class="keyword">delete</span> obj.fn;   </span><br><span class="line"><span class="comment">//先给obj增加fn属性，然后再删除</span></span><br><span class="line"></span><br><span class="line">fn.call(obj);   <span class="comment">//this:obj   输出'张三'</span></span><br><span class="line">fn.call();  <span class="comment">//this:window   严格:undefined</span></span><br><span class="line">fn.call(<span class="literal">null</span>);  <span class="comment">//this:window  严格:undefined</span></span><br></pre></td></tr></table></figure>
+
+<p>因此，如果第一个参数传递的是null / undefined，或者不传，非严格模式下this指向window，严格模式下传递的是谁this就是谁，不传this是undefined.</p>
+<p>如果给fn加参数后，传递参数是什么意思？</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">fn</span>(<span class="params">a,b</span>)</span>&#123;</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br><span class="line">    </span><br><span class="line">fn.call(obj);  <span class="comment">//a和b均为undefined</span></span><br><span class="line">fn.call(obj,<span class="number">1</span>,<span class="number">2</span>);  <span class="comment">//this:obj   a:1  b:2</span></span><br><span class="line">fn.call(<span class="number">1</span>,<span class="number">2</span>);   <span class="comment">//this:1   a:2  b:undefined</span></span><br></pre></td></tr></table></figure>
+
+
+
+<p>那么如何实现一个内置call方法呢？</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment"> * @params:</span></span><br><span class="line"><span class="comment"> *	context:最后要改变的函数中的this指向 </span></span><br><span class="line"><span class="comment"> *  args:传递给函数的实参信息</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">call</span>(<span class="params">context,...args</span>)</span>&#123;</span><br><span class="line">    <span class="comment">//context为null或者undefined为window，否则传了什么就是什么</span></span><br><span class="line">    context = context == <span class="literal">null</span> ? <span class="built_in">window</span> : context;</span><br><span class="line"> </span><br><span class="line">    <span class="comment">//context必须为对象</span></span><br><span class="line">    <span class="keyword">let</span> contextType = <span class="keyword">typeof</span> context;</span><br><span class="line">    <span class="keyword">if</span>(!<span class="regexp">/^(function|object)$/i</span>.test(contextType))&#123;</span><br><span class="line">    	context = <span class="built_in">Object</span>(context);</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">let</span> result,</span><br><span class="line">        key = <span class="built_in">Symbol</span>(<span class="string">'key'</span>);</span><br><span class="line">    context[key] = <span class="keyword">this</span>;   <span class="comment">//把函数作为对象的某个成员值(成员名唯一，防止修改原始对象的值)</span></span><br><span class="line">    result = context[key](...args);  <span class="comment">//基于对象[成员]方式把函数执行，此时函数中的this就是对象</span></span><br><span class="line">    <span class="keyword">delete</span> context[key];  <span class="comment">//设置的成员用完后删除掉</span></span><br><span class="line">    <span class="keyword">return</span> result;  <span class="comment">//把函数的返回值作为call方法执行的结果返回</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="apply"><a href="#apply" class="headerlink" title="apply"></a>apply</h3><blockquote>
+<p>和call方法一样，都是把函数执行，并且改变里面的this关键字，唯一的区别就是传递给函数的参数方式不同；</p>
+</blockquote>
+<p>call和apply的区别：</p>
+<ul>
+<li>call是一个个传参；</li>
+<li>apply是按照数组传参；</li>
+</ul>
+<p>通过实例来对比一下区别：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> obj = &#123;<span class="attr">name</span>:<span class="string">'张三'</span>&#125;;</span><br><span class="line"><span class="keyword">let</span> fn = <span class="function"><span class="keyword">function</span>(<span class="params">a,b</span>)</span>&#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="keyword">this</span>.name);</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">//让fn方法执行，且方法中this指向obj，并且传递参数10和20</span></span><br><span class="line"></span><br><span class="line"><span class="comment">//使用call</span></span><br><span class="line">fn.call(obj,<span class="number">10</span>,<span class="number">20</span>);</span><br><span class="line"></span><br><span class="line"><span class="comment">//使用apply</span></span><br><span class="line">fn.apply(obj,[<span class="number">10</span>,<span class="number">20</span>]);</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="bind"><a href="#bind" class="headerlink" title="bind"></a>bind</h3><blockquote>
+<p>和call / apply 一样，也是用来改变函数中的this关键字的，只不过基于bind改变this，当前方法并没有被执行，类似于预先改变this。</p>
+</blockquote>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> obj = &#123;<span class="attr">name</span>:<span class="string">'张三'</span>&#125;;</span><br><span class="line"><span class="keyword">let</span> fn = <span class="function"><span class="keyword">function</span>(<span class="params">a,b</span>)</span>&#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="keyword">this</span>.name);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="built_in">document</span>.body.onclick=fn;  <span class="comment">//事件触发时，fn中的this-&gt;body</span></span><br></pre></td></tr></table></figure>
+
+<p>如果希望点击body时，让fn中的this指向obj应该怎样去实现？</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">document</span>.body.onclick = fn.call(obj);</span><br></pre></td></tr></table></figure>
+
+<p>是不是很多人觉得应该用call来改变指向，这么写是错误的，错误的，错误的！！！这样处理，不是把fn绑定给事件，而是把fn执行后的结果绑定给了事件。</p>
+<p>正确方法：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//给事件绑定了匿名函数</span></span><br><span class="line"><span class="built_in">document</span>.body.onclick = <span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">    <span class="comment">//this -&gt; body</span></span><br><span class="line">    fn.call(obj);  </span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//那么如何绑定fn呢？</span></span><br><span class="line"></span><br><span class="line"><span class="comment">//使用bind</span></span><br><span class="line"><span class="built_in">document</span>.body.onclick = fn.bind(obj);</span><br></pre></td></tr></table></figure>
+
+<p>由此可见，bind的优势在于：预先把fn中的this修改为obj，此时fn并没有执行，当点击事件触发才会执行fn，而call和apply都是在改变this的同时立即把方法执行。</p>
+<p><em>注：在IE6~8中不支持bind方法</em></p>
+<p>既然存在兼容性，那么就来自己动手实现一个bind方法吧！</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment"> * @params:</span></span><br><span class="line"><span class="comment"> *	context:最后要改变的函数中的this指向 </span></span><br><span class="line"><span class="comment"> *  args:传递给函数的实参信息</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">bind</span>(<span class="params">context,...params</span>)</span>&#123;</span><br><span class="line">    <span class="keyword">let</span> _this = <span class="keyword">this</span>;</span><br><span class="line">    <span class="keyword">return</span> <span class="function"><span class="keyword">function</span> <span class="title">anonymous</span>(<span class="params">...args</span>)</span>&#123;</span><br><span class="line">        <span class="comment">//args -&gt; 可能传递的事件对象等信息</span></span><br><span class="line">        _this.call(context,...params.concat(args));</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="call-amp-apply-amp-bind区别"><a href="#call-amp-apply-amp-bind区别" class="headerlink" title="call &amp; apply &amp; bind区别"></a>call &amp; apply &amp; bind区别</h3><p><strong>call / apply</strong> ：立即执行函数并且修改里面的this；</p>
+<p><strong>bind</strong>：利用柯理化思想，预先把 “需要处理的函数/改变的this/传递的参数” 等信息存储在闭包中，后期达到条件（事件触发/定时器等），先执行返回的匿名函数，在执行匿名函数的过程中再去改变this等 =&gt; this和参数的预处理</p>
+</article><!-- lincense--><div class="post-paginator"><a class="prevSlogan" href="/2020/07/26/%E6%B5%85%E8%B0%88%E5%87%BD%E6%95%B0%E7%9A%84%E9%98%B2%E6%8A%96%E5%92%8C%E8%8A%82%E6%B5%81/" title="浅谈函数的防抖和节流"><span>< PreviousPost</span><br><span class="prevTitle">浅谈函数的防抖和节流</span></a><a class="nextSlogan" href="/2020/07/24/JS%E7%BB%A7%E6%89%BF/" title="JS继承"><span>NextPost ></span><br><span class="nextTitle">JS继承</span></a><div class="clear"></div></div><div id="comment"></div></section></article><footer id="cxo-footer-outer"><div id="cxo-footer-inner"><p class="footer-container"><span>Site by </span><a href="http://hexo.io" target="_blank" rel="noopener"><span>Hexo</span></a><span> | theme </span><a href="https://github.com/Longlongyu/hexo-theme-Cxo" target="_blank" rel="noopener"><span>Cxo</span></a></p><i class="fa fa-user"> </i><span id="busuanzi_value_site_uv"></span><span> | </span><i class="fa fa-eye"> </i><span id="busuanzi_value_site_pv"></span></div></footer><!-- catelog--><div class="toc-wrapper" style="top: 70vh;"><div class="toc-catalog"><i class="fa fa-list"> </i><span>CATALOG</span></div><ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#call"><span class="toc-number">1.</span> <span class="toc-text">call</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#apply"><span class="toc-number">2.</span> <span class="toc-text">apply</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#bind"><span class="toc-number">3.</span> <span class="toc-text">bind</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#call-amp-apply-amp-bind区别"><span class="toc-number">4.</span> <span class="toc-text">call &amp; apply &amp; bind区别</span></a></li></ol></div><!-- top--><i class="fa fa-arrow-up close" id="go-up" aria-hidden="true"></i></body></html>
