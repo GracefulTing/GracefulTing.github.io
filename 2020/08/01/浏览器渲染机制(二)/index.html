@@ -1,0 +1,210 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"><meta name="author" content="GracefulTing"><meta name="renderer" content="webkit"><meta name="copyright" content="GracefulTing"><meta name="keywords" content="Welcome to GracefulTing's blog"><meta name="description" content=""><meta name="Cache-Control" content="no-cache"><meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"><title>浏览器渲染机制(二) · GracefulTing's Blog</title><link rel="stylesheet" href="/css/style.css?v=2018.7.9"><link rel="stylesheet" href="/css/animation.css?v=2018.7.9"><link rel="icon" href="/img/assets/favicon.ico"><link rel="stylesheet" href="https://cdn.bootcss.com/font-awesome/4.7.0/css/font-awesome.min.css?version=1.5.6"><!-- scripts--><script>(function( w ){
+  "use strict";
+  // rel=preload support test
+  if( !w.loadCSS ){
+    w.loadCSS = function(){};
+  }
+  // define on the loadCSS obj
+  var rp = loadCSS.relpreload = {};
+  // rel=preload feature support test
+  // runs once and returns a function for compat purposes
+  rp.support = (function(){
+    var ret;
+    try {
+      ret = w.document.createElement( "link" ).relList.supports( "preload" );
+    } catch (e) {
+      ret = false;
+    }
+    return function(){
+      return ret;
+    };
+  })();
+
+  // if preload isn't supported, get an asynchronous load by using a non-matching media attribute
+  // then change that media back to its intended value on load
+  rp.bindMediaToggle = function( link ){
+    // remember existing media attr for ultimate state, or default to 'all'
+    var finalMedia = link.media || "all";
+
+    function enableStylesheet(){
+      link.media = finalMedia;
+    }
+
+    // bind load handlers to enable media
+    if( link.addEventListener ){
+      link.addEventListener( "load", enableStylesheet );
+    } else if( link.attachEvent ){
+      link.attachEvent( "onload", enableStylesheet );
+    }
+
+    // Set rel and non-applicable media type to start an async request
+    // note: timeout allows this to happen async to let rendering continue in IE
+    setTimeout(function(){
+      link.rel = "stylesheet";
+      link.media = "only x";
+    });
+    // also enable media after 3 seconds,
+    // which will catch very old browsers (android 2.x, old firefox) that don't support onload on link
+    setTimeout( enableStylesheet, 3000 );
+  };
+
+  // loop through link elements in DOM
+  rp.poly = function(){
+    // double check this to prevent external calls from running
+    if( rp.support() ){
+      return;
+    }
+    var links = w.document.getElementsByTagName( "link" );
+    for( var i = 0; i < links.length; i++ ){
+      var link = links[ i ];
+      // qualify links to those with rel=preload and as=style attrs
+      if( link.rel === "preload" && link.getAttribute( "as" ) === "style" && !link.getAttribute( "data-loadcss" ) ){
+        // prevent rerunning on link
+        link.setAttribute( "data-loadcss", true );
+        // bind listeners to toggle media back
+        rp.bindMediaToggle( link );
+      }
+    }
+  };
+
+  // if unsupported, run the polyfill
+  if( !rp.support() ){
+    // run once at least
+    rp.poly();
+
+    // rerun poly on an interval until onload
+    var run = w.setInterval( rp.poly, 500 );
+    if( w.addEventListener ){
+      w.addEventListener( "load", function(){
+        rp.poly();
+        w.clearInterval( run );
+      } );
+    } else if( w.attachEvent ){
+      w.attachEvent( "onload", function(){
+        rp.poly();
+        w.clearInterval( run );
+      } );
+    }
+  }
+
+
+  // commonjs
+  if( typeof exports !== "undefined" ){
+    exports.loadCSS = loadCSS;
+  }
+  else {
+    w.loadCSS = loadCSS;
+  }
+}( typeof global !== "undefined" ? global : this ) );</script><script src="https://cdn.jsdelivr.net/npm/jquery@3.3.1/dist/jquery.min.js" defer></script><script src="/js/main.js?v=2018.7.9" defer></script><!-- fancybox--><link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.2.5/jquery.fancybox.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'"><script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.2.5/jquery.fancybox.min.js" defer></script><!-- busuanzi--><script async src="//dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script><meta name="generator" content="Hexo 4.2.1"></head><body><section class="profile-close" id="cxo-profile"><div class="profile-avatar"><i class="fa fa-caret-left"></i><img src="/img/assets/cat.png"></div><!--.profile-saying
+  i.fa.fa-comment
+  .saying--><div class="cxo-profile-inner"><div class="profile-name">Grace</div><div class="profile-signature">The harder, the more fortunate</div><div class="read-progress"></div></div></section><header id="cxo-intro" style="height: 70vh;background-image: url(/img/intro/index-bg.png);"><nav id="cxo-intro-nav"><section><div class="intro-nav-title"><a href="/">GracefulTing's Blog</a></div><div class="intro-nav-label-box"><a href="/">Home</a><a href="/about/">About</a><a href="/archives/">Archives</a><a href="/tags/">Tags</a></div><i class="fa fa-bars intro-nav-menu"><div class="intro-nav-drop"><a href="/">Home</a><a href="/about/">About</a><a href="/archives/">Archives</a><a href="/tags/">Tags</a></div></i><div class="clear"></div></section></nav><h1 class="post-title">浏览器渲染机制(二)</h1><div class="post-intros"><div class="post-intro-meta"><span class="post-intro-time"><i class="post-intro-calendar fa fa-calendar"></i><span>2020-08-01</span></span></div></div></header><article class="cxo-up" id="cxo-content-outer"><section id="cxo-content-inner"><article class="article-entry" id="post"><h3 id="浏览器渲染过程"><a href="#浏览器渲染过程" class="headerlink" title="浏览器渲染过程"></a>浏览器渲染过程</h3><p>一个页面从服务器访问回来后，浏览器拿到页面源代码后都做了哪些事情？</p>
+<ol>
+<li><p>生成DOM TREE   =&gt;   处理HTML</p>
+<ul>
+<li><p>基于HTTP获取的是流文件（进制编码）；    —–16进制</p>
+</li>
+<li><p>把进制编码编译为具体的字符；   —–字符串</p>
+</li>
+<li><p>按照Token进行解析（词法解析）；         ——-startTag:html 等，此处token作为令牌，是词法解析的规则</p>
+</li>
+<li><p>生成具体的节点（元素节点 / 文本节点…）；   ——-标签</p>
+</li>
+<li><p>按照相互嵌套的关系生成DOM树（节点树）；</p>
+</li>
+</ul>
+</li>
+<li><p>生成CSSOM TREE   =&gt;  处理CSS</p>
+<ul>
+<li>同DOM TREE类似，只是一个处理HTML，一个处理CSS</li>
+</ul>
+</li>
+<li><p>生成RENDER TREE（渲染树）；    </p>
+<ul>
+<li>DOM TREE + CSSOM TREE  = RENDER TREE</li>
+<li>对于开始设置为display：none样式的元素是不会在渲染树中生成的（开始加载页面时这些元素不进行渲染）；</li>
+</ul>
+</li>
+<li><p>布局 / 回流 / 重排 （Layout）；</p>
+<ul>
+<li>按照渲染树计算出每个元素在视口中的位置和大小；</li>
+</ul>
+</li>
+<li><p>分层；    —–脱离文档流造成的，z-index层级（通过开发者工具 ——  More Tools —— Layers）</p>
+<ul>
+<li><p>按照计算出来的样式进行分层；</p>
+<p>定位 / 设置透明度  RGBA / 设置滤镜 / 文本超过盒子大小时被裁切 </p>
+</li>
+<li><p>单独计算每一层的绘制列表（具体怎么绘制）；</p>
+</li>
+</ul>
+<p>———————————–&gt;以上的操作都是交给 “GUI渲染线程” 来完成的</p>
+</li>
+<li><p>绘制 / 重绘（Painting）；</p>
+<ul>
+<li>把生成的绘制列表提交给 “合成线程”；</li>
+</ul>
+</li>
+</ol>
+<ul>
+<li>“合成线程” 进行最后绘制，呈现在浏览器的页面上；</li>
+</ul>
+<p>【过程1-5是GUI渲染线程完成，6是合成线程】</p>
+<p><img src="/img/blog/render/%E6%B5%8F%E8%A7%88%E5%99%A8%E6%B8%B2%E6%9F%93%E8%BF%87%E7%A8%8B.png" alt=""></p>
+<h2 id="进程和线程"><a href="#进程和线程" class="headerlink" title="进程和线程"></a>进程和线程</h2><p>进程：一个程序（浏览器新建一个页卡就是一个进程）  【工厂】</p>
+<p>线程：一个进程中可能会包含多个线程，每个线程同时可以做一件事情  【工人】</p>
+<p>真正的同时做多件事情必须依赖多线程，浏览器是多线程的。</p>
+<p>但是JS本身是单线程的，因为浏览器本身只分配一个线程 “GUI渲染线程” 运行JS代码；</p>
+<p>JS从本质来讲是不能同时做多件事情的：</p>
+<p>​    <strong>同步</strong>：上一件事情完成，再去做下一件事情；</p>
+<p>​    <strong>异步</strong>：上一件事情没有完成，把它做一些特殊处理，下一件事情继续执行；【但是绝对不是JS可以同时处理两个事情】</p>
+<p>浏览器生成DOM TREE / CSSOM TREE 的过程也是单线程的“GUI渲染线程”，会配合浏览器的多线程去完成一些事情，例如：资源请求利用的就是浏览器的HTTP网络线程去做的；</p>
+<h2 id="浏览器具体的解析过程-“GUI渲染线程”"><a href="#浏览器具体的解析过程-“GUI渲染线程”" class="headerlink" title="浏览器具体的解析过程 “GUI渲染线程”"></a>浏览器具体的解析过程 “GUI渲染线程”</h2><ol>
+<li><p>自上而下解析完所有HTML标签/各种节点后，DOM TREE就生成了；</p>
+</li>
+<li><p>但是过程中还会遇到一些比较特殊的：    </p>
+<p>css</p>
+<ul>
+<li><p>link：外链式 ，浏览器会分配一个新的HTTP网络线程去加载资源文件，不会阻碍DOM树的渲染 ；</p>
+</li>
+<li><p>style：内嵌式，不用去请求新的资源文件了，但是此时样式还没有处理，浏览器会做一个记录，它会等待所有的CSS资源加载回来之后按照先后顺序依次渲染CSS，从而生成CSSOM树；</p>
+</li>
+<li><p>import：导入式，虽然也是分配HTTP网络线程去加载资源文件，但是此时GUI渲染线程会被阻塞掉【阻碍DOM树渲染】，只有等资源加载回来后才会继续渲染DOM；</p>
+</li>
+</ul>
+<p>js</p>
+<ul>
+<li><p>遇到script内嵌js代码的，会立即执行JS，阻碍DOM TREE的渲染；</p>
+</li>
+<li><p>遇到script外链js代码的，会阻碍DOM TREE的渲染，同时分配一个HTTP线程去加载资源文件；资源文件加载回来后，立即执行JS；如果JS中没有采用异步，直接获取DOM元素而DOM元素此时还没有渲染，JS是获取不到的；</p>
+</li>
+</ul>
+<p>img</p>
+<ul>
+<li>老版本浏览器会阻碍DOM渲染；</li>
+<li>新版本浏览器虽然不会阻碍DOM渲染，但是图片资源的请求会占用HTTP线程（浏览器同时只能开6~7个HTTP线程，这样图片/音视频资源加载本来就会慢，会影响其它资源link/script等的加载）；</li>
+<li>图片资源的渲染也是比一般资源耗时间的，也会拖累页面的渲染速度；</li>
+</ul>
+<p>———–性能优化——————</p>
+<p>CRP浏览器关键节点优化</p>
+<ul>
+<li><p>不用@import；</p>
+</li>
+<li><p>link放到Head中，尽可能提前加载资源我呢见，这样等DOM树渲染完后，资源可能也加载回来了；</p>
+</li>
+<li><p>如果css代码比较少，尽可能使用内嵌式，可以减少HTTP请求；但是如果样式比较多，采用内嵌式，第一次加载HTML都会浪费很长时间，这样还不如基于link分开加载；移动端开发都是内嵌优先（当然也要考虑CSS代码量）。</p>
+</li>
+<li><p>减少DOM或者减少DOM的层级嵌套，以及标签语义化…【开始只把首屏结构/内容写出来，渲染只是首屏的，当首屏加载完页面滚动的时候，再基于JS创建其它屏幕的结构和内容 =&gt; 骨架屏/SSR】</p>
+<p>[客户端骨架屏，开始首屏结构都没有，只有一个loading或者占位图而已]</p>
+</li>
+<li><p>把script放到页面底部（先渲染DOM TREE，再执行JS也可以获取到DOM元素了），也可以基于事件DOMContentLoaded / load等到结构加载完成再去获取DOM元素；</p>
+</li>
+<li><p>async / defer给script设置的属性，async是开辟HTTP线程加载资源文件，此时DOM TREE继续，但是资源文件一旦加载回来停止DOM TREE，先执行JS代码（不考虑JS引入顺序，谁先加载回来谁先执行），defer也是开辟HTTP线程加载资源文件，即使资源文件加载回来，也会等待DOM TREE渲染完，然后按照JS的导入顺序依次执行JS（不兼容低版本浏览器）；</p>
+</li>
+<li><p>图片合并（css  sprite）/ base64 / iconfont(css绘制) / svg / 图片懒加载</p>
+</li>
+</ul>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">window</span>.onload = <span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">    <span class="comment">//触发条件：所有资源都加载完成（包含DOM TREE / CSS / 图片等资源）</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="built_in">window</span>.addEventListener(<span class="string">'DOMContentLoaded'</span>,<span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">    <span class="comment">//触发条件：DOM TREE加载完成即可</span></span><br><span class="line">&#125;)</span><br><span class="line"></span><br><span class="line">setTimeout(<span class="function"><span class="params">()</span>=&gt;</span>&#123;</span><br><span class="line">    <span class="comment">//...</span></span><br><span class="line">&#125;,<span class="number">0</span>)</span><br><span class="line"></span><br><span class="line">上面三个执行顺序：DOMContentLoaded &gt; onload，定时器设置<span class="number">0</span>优先级<span class="number">1</span></span><br></pre></td></tr></table></figure>
+
+</li>
+</ol>
+</article><!-- lincense--><div class="post-paginator"><a class="nextSlogan" href="/2020/07/30/Promise/" title="Promise"><span>NextPost ></span><br><span class="nextTitle">Promise</span></a><div class="clear"></div></div><div id="comment"></div></section></article><footer id="cxo-footer-outer"><div id="cxo-footer-inner"><p class="footer-container"><span>Site by </span><a href="http://hexo.io" target="_blank" rel="noopener"><span>Hexo</span></a><span> | theme </span><a href="https://github.com/Longlongyu/hexo-theme-Cxo" target="_blank" rel="noopener"><span>Cxo</span></a></p><i class="fa fa-user"> </i><span id="busuanzi_value_site_uv"></span><span> | </span><i class="fa fa-eye"> </i><span id="busuanzi_value_site_pv"></span></div></footer><!-- catelog--><div class="toc-wrapper" style="top: 70vh;"><div class="toc-catalog"><i class="fa fa-list"> </i><span>CATALOG</span></div><ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#浏览器渲染过程"><span class="toc-number">1.</span> <span class="toc-text">浏览器渲染过程</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#进程和线程"><span class="toc-number"></span> <span class="toc-text">进程和线程</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#浏览器具体的解析过程-“GUI渲染线程”"><span class="toc-number"></span> <span class="toc-text">浏览器具体的解析过程 “GUI渲染线程”</span></a></div><!-- top--><i class="fa fa-arrow-up close" id="go-up" aria-hidden="true"></i></body></html>

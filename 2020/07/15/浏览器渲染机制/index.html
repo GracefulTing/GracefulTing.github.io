@@ -97,7 +97,119 @@
   }
 }( typeof global !== "undefined" ? global : this ) );</script><script src="https://cdn.jsdelivr.net/npm/jquery@3.3.1/dist/jquery.min.js" defer></script><script src="/js/main.js?v=2018.7.9" defer></script><!-- fancybox--><link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.2.5/jquery.fancybox.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'"><script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.2.5/jquery.fancybox.min.js" defer></script><!-- busuanzi--><script async src="//dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script><meta name="generator" content="Hexo 4.2.1"></head><body><section class="profile-close" id="cxo-profile"><div class="profile-avatar"><i class="fa fa-caret-left"></i><img src="/img/assets/cat.png"></div><!--.profile-saying
   i.fa.fa-comment
-  .saying--><div class="cxo-profile-inner"><div class="profile-name">Grace</div><div class="profile-signature">The harder, the more fortunate</div><div class="read-progress"></div></div></section><header id="cxo-intro" style="height: 70vh;background-image: url(/img/intro/index-bg.png);"><nav id="cxo-intro-nav"><section><div class="intro-nav-title"><a href="/">GracefulTing's Blog</a></div><div class="intro-nav-label-box"><a href="/">Home</a><a href="/about/">About</a><a href="/archives/">Archives</a><a href="/tags/">Tags</a></div><i class="fa fa-bars intro-nav-menu"><div class="intro-nav-drop"><a href="/">Home</a><a href="/about/">About</a><a href="/archives/">Archives</a><a href="/tags/">Tags</a></div></i><div class="clear"></div></section></nav><h1 class="post-title">浏览器渲染机制</h1><div class="post-intros"><div class="post-intro-meta"><span class="post-intro-time"><i class="post-intro-calendar fa fa-calendar"></i><span>2020-07-15</span></span></div></div></header><article class="cxo-up" id="cxo-content-outer"><section id="cxo-content-inner"><article class="article-entry" id="post"><h2 id="浏览器渲染机制"><a href="#浏览器渲染机制" class="headerlink" title="浏览器渲染机制"></a>浏览器渲染机制</h2><ol>
+  .saying--><div class="cxo-profile-inner"><div class="profile-name">Grace</div><div class="profile-signature">The harder, the more fortunate</div><div class="read-progress"></div></div></section><header id="cxo-intro" style="height: 70vh;background-image: url(/img/intro/index-bg.png);"><nav id="cxo-intro-nav"><section><div class="intro-nav-title"><a href="/">GracefulTing's Blog</a></div><div class="intro-nav-label-box"><a href="/">Home</a><a href="/about/">About</a><a href="/archives/">Archives</a><a href="/tags/">Tags</a></div><i class="fa fa-bars intro-nav-menu"><div class="intro-nav-drop"><a href="/">Home</a><a href="/about/">About</a><a href="/archives/">Archives</a><a href="/tags/">Tags</a></div></i><div class="clear"></div></section></nav><h1 class="post-title">浏览器渲染机制</h1><div class="post-intros"><div class="post-intro-meta"><span class="post-intro-time"><i class="post-intro-calendar fa fa-calendar"></i><span>2020-07-15</span></span></div></div></header><article class="cxo-up" id="cxo-content-outer"><section id="cxo-content-inner"><article class="article-entry" id="post"><h2 id="浏览器渲染过程"><a href="#浏览器渲染过程" class="headerlink" title="浏览器渲染过程"></a>浏览器渲染过程</h2><p>一个页面从服务器访问回来后，浏览器拿到页面源代码后做的事情：</p>
+<ol>
+<li><p>生成DOM TREE   =&gt;   处理HTML</p>
+<ul>
+<li><p>基于HTTP获取的是流文件（进制编码）；    —–16进制</p>
+</li>
+<li><p>把进制编码编译为具体的字符；   —–字符串</p>
+</li>
+<li><p>按照Token进行解析（词法解析）；         ——-startTag:html 等，此处token作为令牌，是词法解析的规则</p>
+</li>
+<li><p>生成具体的节点（元素节点 / 文本节点…）；   ——-标签</p>
+</li>
+<li><p>按照相互嵌套的关系生成DOM树（节点树）；</p>
+</li>
+</ul>
+</li>
+<li><p>生成CSSOM TREE   =&gt;  处理CSS</p>
+<ul>
+<li>同DOM TREE类似，只是一个处理HTML，一个处理CSS</li>
+</ul>
+</li>
+<li><p>生成RENDER TREE（渲染树）；    </p>
+<ul>
+<li>DOM TREE + CSSOM TREE  = RENDER TREE</li>
+<li>对于开始设置为display：none样式的元素是不会在渲染树中生成的（开始加载页面时这些元素不进行渲染）；</li>
+</ul>
+</li>
+<li><p>布局 / 回流 / 重排 （Layout）；</p>
+<ul>
+<li>按照渲染树计算出每个元素在视口中的位置和大小；</li>
+</ul>
+</li>
+<li><p>分层；    —–脱离文档流造成的，z-index层级（通过开发者工具 ——  More Tools —— Layers）</p>
+<ul>
+<li><p>按照计算出来的样式进行分层；</p>
+<p>定位 / 设置透明度  RGBA / 设置滤镜 / 文本超过盒子大小时被裁切 </p>
+</li>
+<li><p>单独计算每一层的绘制列表（具体怎么绘制）；</p>
+</li>
+</ul>
+<p>———————————–&gt;以上的操作都是交给 “GUI渲染线程” 来完成的</p>
+</li>
+<li><p>绘制 / 重绘（Painting）；</p>
+<ul>
+<li><p>把生成的绘制列表提交给 “合成线程”；</p>
+</li>
+<li><p>“合成线程” 进行最后绘制，呈现在浏览器的页面上；</p>
+</li>
+</ul>
+</li>
+</ol>
+<p>1-5是GUI渲染线程完成，6是合成线程；</p>
+<h2 id="进程和线程"><a href="#进程和线程" class="headerlink" title="进程和线程"></a>进程和线程</h2><p>进程：一个程序（浏览器新建一个页卡就是一个进程）  【工厂】</p>
+<p>线程：一个进程中可能会包含多个线程，每个线程同时可以做一件事情  【工人】</p>
+<p>真正的同时做多件事情必须依赖多线程，浏览器是多线程的。</p>
+<p>但是JS本身是单线程的，因为浏览器本身只分配一个线程 “GUI渲染线程” 运行JS代码；</p>
+<p>JS从本质来讲是不能同时做多件事情的：</p>
+<p>​    <strong>同步</strong>：上一件事情完成，再去做下一件事情；</p>
+<p>​    <strong>异步</strong>：上一件事情没有完成，把它做一些特殊处理，下一件事情继续执行；【但是绝对不是JS可以同时处理两个事情】</p>
+<p>浏览器生成DOM TREE / CSSOM TREE 的过程也是单线程的“GUI渲染线程”，会配合浏览器的多线程去完成一些事情，例如：资源请求利用的就是浏览器的HTTP网络线程去做的；</p>
+<h2 id="浏览器具体的解析过程-“GUI渲染线程”"><a href="#浏览器具体的解析过程-“GUI渲染线程”" class="headerlink" title="浏览器具体的解析过程 “GUI渲染线程”"></a>浏览器具体的解析过程 “GUI渲染线程”</h2><ol>
+<li><p>自上而下解析完所有HTML标签/各种节点后，DOM TREE就生成了；</p>
+</li>
+<li><p>但是过程中还会遇到一些比较特殊的：    </p>
+<p>css</p>
+<ul>
+<li><p>link：外链式 ，浏览器会分配一个新的HTTP网络线程去加载资源文件，不会阻碍DOM树的渲染 ；</p>
+</li>
+<li><p>style：内嵌式，不用去请求新的资源文件了，但是此时样式还没有处理，浏览器会做一个记录，它会等待所有的CSS资源加载回来之后按照先后顺序依次渲染CSS，从而生成CSSOM树；</p>
+</li>
+<li><p>import：导入式，虽然也是分配HTTP网络线程去加载资源文件，但是此时GUI渲染线程会被阻塞掉【阻碍DOM树渲染】，只有等资源加载回来后才会继续渲染DOM；</p>
+</li>
+</ul>
+<p>js</p>
+<ul>
+<li><p>遇到script内嵌js代码的，会立即执行JS，阻碍DOM TREE的渲染；</p>
+</li>
+<li><p>遇到script外链js代码的，会阻碍DOM TREE的渲染，同时分配一个HTTP线程去加载资源文件；资源文件加载回来后，立即执行JS；如果JS中没有采用异步，直接获取DOM元素而DOM元素此时还没有渲染，JS是获取不到的；</p>
+</li>
+</ul>
+<p>img</p>
+<ul>
+<li>老版本浏览器会阻碍DOM渲染；</li>
+<li>新版本浏览器虽然不会阻碍DOM渲染，但是图片资源的请求会占用HTTP线程（浏览器同时只能开6~7个HTTP线程，这样图片/音视频资源加载本来就会慢，会影响其它资源link/script等的加载）；</li>
+<li>图片资源的渲染也是比一般资源耗时间的，也会拖累页面的渲染速度；</li>
+</ul>
+<p>———–性能优化——————</p>
+<p>CRP浏览器关键节点优化</p>
+<ul>
+<li><p>不用@import；</p>
+</li>
+<li><p>link放到Head中，尽可能提前加载资源我呢见，这样等DOM树渲染完后，资源可能也加载回来了；</p>
+</li>
+<li><p>如果css代码比较少，尽可能使用内嵌式，可以减少HTTP请求；但是如果样式比较多，采用内嵌式，第一次加载HTML都会浪费很长时间，这样还不如基于link分开加载；移动端开发都是内嵌优先（当然也要考虑CSS代码量）。</p>
+</li>
+<li><p>减少DOM或者减少DOM的层级嵌套，以及标签语义化…【开始只把首屏结构/内容写出来，渲染只是首屏的，当首屏加载完页面滚动的时候，再基于JS创建其它屏幕的结构和内容 =&gt; 骨架屏/SSR】</p>
+<p>[客户端骨架屏，开始首屏结构都没有，只有一个loading或者占位图而已]</p>
+</li>
+<li><p>把script放到页面底部（先渲染DOM TREE，再执行JS也可以获取到DOM元素了），也可以基于事件DOMContentLoaded / load等到结构加载完成再去获取DOM元素；</p>
+</li>
+<li><p>async / defer给script设置的属性，async是开辟HTTP线程加载资源文件，此时DOM TREE继续，但是资源文件一旦加载回来停止DOM TREE，先执行JS代码（不考虑JS引入顺序，谁先加载回来谁先执行），defer也是开辟HTTP线程加载资源文件，即使资源文件加载回来，也会等待DOM TREE渲染完，然后按照JS的导入顺序依次执行JS（不兼容低版本浏览器）；</p>
+</li>
+<li><p>图片合并（css  sprite）/ base64 / iconfont(css绘制) / svg / 图片懒加载</p>
+</li>
+</ul>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">window</span>.onload = <span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">    <span class="comment">//触发条件：所有资源都加载完成（包含DOM TREE / CSS / 图片等资源）</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="built_in">window</span>.addEventListener(<span class="string">'DOMContentLoaded'</span>,<span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">    <span class="comment">//触发条件：DOM TREE加载完成即可</span></span><br><span class="line">&#125;)</span><br><span class="line"></span><br><span class="line">setTimeout(<span class="function"><span class="params">()</span>=&gt;</span>&#123;</span><br><span class="line">    <span class="comment">//...</span></span><br><span class="line">&#125;,<span class="number">0</span>)</span><br><span class="line"></span><br><span class="line">上面三个执行顺序：DOMContentLoaded &gt; onload，定时器设置<span class="number">0</span>优先级<span class="number">1</span></span><br></pre></td></tr></table></figure>
+
+
+
+</li>
+</ol>
+<p>​    </p>
+<ol>
 <li><p>浏览器渲染过程</p>
 <p>首先要从服务器获取需要渲染的内容，此时获取到的是文件流（进制编码内容），那么接下来浏览器会把16进制字节信息编译为代码字符串，然后按照W3C规则进行字符解析生成对应的tokens，再转换成浏览器内核可以识别渲染的DOM节点，最后再按照节点解析为对应的DOM树和CSSOM树。</p>
 <p><img src="/img/blog/render/all.png" alt=""></p>
@@ -148,7 +260,7 @@
 <p>   <strong><em>注：回流一定会触发重绘，重绘不一定会回流。</em></strong></p>
 <figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">box.onclick=<span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">	<span class="comment">//这两行修改操作只引发一次回流</span></span><br><span class="line">	box.style.width = <span class="string">"200px"</span>;</span><br><span class="line">	box.style.height = <span class="string">"200px"</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">box.onclick=<span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">	<span class="comment">//引发两次回流，因为一旦遇到获取样式的代码需要把之前队列中的样式进行渲染</span></span><br><span class="line">	box.style.width = <span class="string">"200px"</span>;</span><br><span class="line">    <span class="built_in">console</span>.log(box.offsetWidth);</span><br><span class="line">	box.style.height = <span class="string">"200px"</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
-<p><strong>浏览器渲染队列机制</strong>：遇到修改样式代码，浏览器没有立即渲染，而是先把它放到渲染队列中，继续看下面是否还是修改样式的，是的话继续放进去……直到遇到获取元素样式的代码或者没有修改样式的代码了，则立即把队列中的样式统一进行渲染，最后只引发一次回流重绘。</p>
+<p><strong>浏览器渲染队列机制</strong>：遇到修改样式代码，浏览器没有立即渲染，而是先把它放到渲染队列中，继续看下面是否还是修改样式的，是的话继续放进去……直到遇到获取元素样式的代码（盒子模型或者获取样式）或者没有修改样式的代码了，则把现有队列中的样式统一进行渲染（引发一次回流），继续向下执行代码…</p>
 <p>避免回流重绘：</p>
 <ul>
 <li><p>​    分离读写（获取和修改分开）；</p>
@@ -158,12 +270,15 @@
 <figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">div.style.left = div.offsetLeft - <span class="number">1</span> + <span class="string">'px'</span>;</span><br><span class="line">=&gt;</span><br><span class="line"><span class="comment">//先获取值再使用</span></span><br><span class="line"><span class="keyword">var</span> curLeft = div.offsetLeft;</span><br><span class="line">div.style.left = curLeft - <span class="number">1</span> + <span class="string">'px'</span>;</span><br></pre></td></tr></table></figure>
 </li>
 <li><p>​    元素批量修改；</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> frg = <span class="built_in">document</span>.createDocumentFragment();</span><br><span class="line"><span class="keyword">for</span>(<span class="keyword">let</span> i=<span class="number">0</span>;i&lt;<span class="number">10</span>;i++)&#123;</span><br><span class="line">    <span class="keyword">let</span> span = <span class="built_in">document</span>.cereateElement(<span class="string">'span'</span>);</span><br><span class="line">    span.innerHTML = i;</span><br><span class="line">    frg.appendChild(i);</span><br><span class="line">&#125;</span><br><span class="line"><span class="built_in">document</span>.body.appendChild(frg);   <span class="comment">//创建文档碎片，引发一次回流</span></span><br></pre></td></tr></table></figure>
-
-
-
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//文档碎片</span></span><br><span class="line"><span class="keyword">let</span> frg = <span class="built_in">document</span>.createDocumentFragment();</span><br><span class="line"><span class="keyword">for</span>(<span class="keyword">let</span> i=<span class="number">0</span>;i&lt;<span class="number">10</span>;i++)&#123;</span><br><span class="line">    <span class="keyword">let</span> span = <span class="built_in">document</span>.cereateElement(<span class="string">'span'</span>);</span><br><span class="line">    span.innerHTML = i;</span><br><span class="line">    frg.appendChild(i);</span><br><span class="line">&#125;</span><br><span class="line"><span class="built_in">document</span>.body.appendChild(frg);   <span class="comment">//创建文档碎片，引发一次回流</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment">//字符串拼接</span></span><br><span class="line"><span class="keyword">let</span> str = <span class="string">``</span>;</span><br><span class="line"><span class="keyword">for</span>(<span class="keyword">let</span> i=<span class="number">0</span>;i&lt;<span class="number">5</span>;i++)&#123;</span><br><span class="line">    str += <span class="string">`&lt;span&gt;<span class="subst">$&#123;i&#125;</span>&lt;/span&gt;`</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="built_in">document</span>.body.innerHTML = str;</span><br></pre></td></tr></table></figure>
 
 
 </li>
 </ul>
-</article><!-- lincense--><div class="post-paginator"><a class="prevSlogan" href="/2020/07/15/%E7%AE%97%E6%B3%95/" title="算法"><span>< PreviousPost</span><br><span class="prevTitle">算法</span></a><a class="nextSlogan" href="/2020/07/15/0712%E7%BB%83%E4%B9%A0/" title="0712练习"><span>NextPost ></span><br><span class="nextTitle">0712练习</span></a><div class="clear"></div></div><div id="comment"></div></section></article><footer id="cxo-footer-outer"><div id="cxo-footer-inner"><p class="footer-container"><span>Site by </span><a href="http://hexo.io" target="_blank" rel="noopener"><span>Hexo</span></a><span> | theme </span><a href="https://github.com/Longlongyu/hexo-theme-Cxo" target="_blank" rel="noopener"><span>Cxo</span></a></p><i class="fa fa-user"> </i><span id="busuanzi_value_site_uv"></span><span> | </span><i class="fa fa-eye"> </i><span id="busuanzi_value_site_pv"></span></div></footer><!-- catelog--><div class="toc-wrapper" style="top: 70vh;"><div class="toc-catalog"><i class="fa fa-list"> </i><span>CATALOG</span></div><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#浏览器渲染机制"><span class="toc-number">1.</span> <span class="toc-text">浏览器渲染机制</span></a></li></ol></div><!-- top--><i class="fa fa-arrow-up close" id="go-up" aria-hidden="true"></i></body></html>
+<ul>
+<li>动画操作或者样式的改变，如果操作的是具备 position:absolute/fixed 再或者具备 opacity/filters 等这些属性样式的元素上，则可以优化回流的速度（不是不回流，只是优化了回流的速度 =&gt; 因为拥有这些样式的元素，它们渲染的时候是分层渲染的，我们修改这些元素上的样式，在重新Layout和渲染的时候，只会对当前层进行重新处理）。</li>
+</ul>
+<ul>
+<li>还有一个更优化的手段：transform，基于transform修改元素的样式，直接跳过Render Tree和Layout阶段，直接把更改的样式告诉 “合成线程” 去渲染，不会引发回流，只会重绘而已。    =&gt;开启了渲染的硬件加速</li>
+</ul>
+</article><!-- lincense--><div class="post-paginator"><a class="prevSlogan" href="/2020/07/15/%E7%AE%97%E6%B3%95/" title="算法"><span>< PreviousPost</span><br><span class="prevTitle">算法</span></a><a class="nextSlogan" href="/2020/07/15/0712%E7%BB%83%E4%B9%A0/" title="0712练习"><span>NextPost ></span><br><span class="nextTitle">0712练习</span></a><div class="clear"></div></div><div id="comment"></div></section></article><footer id="cxo-footer-outer"><div id="cxo-footer-inner"><p class="footer-container"><span>Site by </span><a href="http://hexo.io" target="_blank" rel="noopener"><span>Hexo</span></a><span> | theme </span><a href="https://github.com/Longlongyu/hexo-theme-Cxo" target="_blank" rel="noopener"><span>Cxo</span></a></p><i class="fa fa-user"> </i><span id="busuanzi_value_site_uv"></span><span> | </span><i class="fa fa-eye"> </i><span id="busuanzi_value_site_pv"></span></div></footer><!-- catelog--><div class="toc-wrapper" style="top: 70vh;"><div class="toc-catalog"><i class="fa fa-list"> </i><span>CATALOG</span></div><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#浏览器渲染过程"><span class="toc-number">1.</span> <span class="toc-text">浏览器渲染过程</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#进程和线程"><span class="toc-number">2.</span> <span class="toc-text">进程和线程</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#浏览器具体的解析过程-“GUI渲染线程”"><span class="toc-number">3.</span> <span class="toc-text">浏览器具体的解析过程 “GUI渲染线程”</span></a></li></ol></div><!-- top--><i class="fa fa-arrow-up close" id="go-up" aria-hidden="true"></i></body></html>
