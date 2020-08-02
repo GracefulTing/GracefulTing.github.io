@@ -1,16 +1,37 @@
+## 进程和线程
+
+进程：一个程序（浏览器新建一个页卡就是一个进程）  【工厂】
+
+线程：一个进程中可能会包含多个线程，每个线程同时可以做一件事情  【工人】
+
+
+
 ## 同步异步编程
 
-浏览器是多线程的，包含：
+真正的同时做多件事情必须依赖多线程，浏览器是多线程的，其中包含：
 
 1. GUI渲染线程；
 2. HTTP网络请求线程（并发数 6-7）；
 3. 事件监听、定时器监听...
 
+
+
+任务队列是在打开页面的时候就分配了！！！
+
+
+
 JS代码的运行是单线程的：浏览器只分配一个GUI渲染线程去执行JS代码。
 
-同步编程——对于大部分js来讲，上面代码没有执行完下面代码是不能执行的；
+**同步编程**——对于大部分js来讲，上面代码没有执行完下面代码是不能执行的；
 
-异步编程——某些JS代码（事件绑定、定时器、Promise / async / await / ajax等），需要在上面代码没有处理完的情况下，GUI渲染线程能够继续向下执行；
+**异步编程**——上一件事情没有完成，把它做一些特殊处理，下一件事情继续执行；某些JS代码（事件绑定、定时器、Promise / async / await / ajax等），需要在上面代码没有处理完的情况下，GUI渲染线程能够继续向下执行；【但是绝对不是JS可以同时处理两个事情】
+
+- setTimeout / setInterval定时器；
+- 事件绑定/事件监听；
+- ajax/fetch请求数据的时候也是采用异步的（ajax可以控制同步）;
+- promise中的异步操作；
+- async/await中的异步操作；
+- node.js中的异步操作；
 
 ```javascript
 /*	度量一个程序的执行时间
@@ -23,10 +44,10 @@ console.timeEnd('AAA');
 ```
 
 ```javascript
-//setTimeout时间是0并不是立即执行，而是需要等待浏览器的最小反应时间
+//定时器设置的0ms也不是立即执行的同步任务，浏览器有最小等待时间，它还是异步任务，需要放在EventQueue中
 setTimeout(()=>{
     ...
-},0)
+},0) 
 
 //练习
 console.log(1);
@@ -144,7 +165,7 @@ new Promise(function(resolve){
 
 
 
-练习：
+练习1：
 
 ```javascript
 async function async1() {
@@ -167,9 +188,58 @@ new Promise(function (resolve) {
 	console.log('promise2');
 });
 console.log('script end');
-//输出结果：
 ```
 
 一张图带你看整个流程：
 
 ![](/img/blog/render/宏任务和微任务.png)
+
+
+
+练习2：
+
+```javascript
+async function async1() {
+    console.log('async1 start1');
+    async2();
+    console.log('async1 end');
+}
+
+async function async2() {
+    console.log('async2');
+}
+
+console.log('illegalscript start');
+
+setTimeout(function () {
+    console.log("setTimeout")
+});
+
+async1();
+
+new Promise(function (resolve) {
+    console.log('promise1');
+    resolve()
+}).then(function () {
+    console.log('promise2');
+});
+
+console.log('illegalscript end')
+```
+
+答案：
+
+```
+illegalscript start
+async1 start
+async2
+async1 end
+promise1
+illegalscript end
+promise2
+setTimeout
+```
+
+解析过程：
+
+![](/img/blog/render/时间循环机制.png)
