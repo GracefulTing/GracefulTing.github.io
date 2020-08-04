@@ -8,12 +8,20 @@
 - 代码校验：配置单元测试
 - 自动发布
 
+
+
+**webpack初始化**
+
 ```javascript
-npm inint -y   //初始化
+新建文件夹 webpack-test
+cd webpack-test
+npm init -y   //初始化 => 生成package.json文件
 npm install webpack webpack-cli -D  
 ```
 
 
+
+**关于commonJS和esModule**
 
 commonJS:  require   module.exports
 
@@ -26,19 +34,57 @@ export default sum;   //引入可以随意起名
 
 
 
-打包命令：npm 版本5之后执行 npx webpack打包
+打包命令：npm 版本5之后执行下面命令打包
+
+```
+npx webpack
+```
 
 
+
+**配置webpack.config.js文件**
+
+规范：node   commonJS规范
+
+**单入口配置**
+
+```javascript
+const path = require('path');
+module.exports = {
+    entry:'./src/index.js',   //单个入口文件
+    output:{
+        //[hash、chunkHash、contentHash]
+        filename: 'bundle.[contentHash:8].js',   //生成的文件名,加了8位的hash值 
+        path: path.resolve(__dirname, "dist")    // => 需要引入path,该配置表明生成文件夹dist
+    }
+}
+```
+
+**多入口多出口文件的配置**
+
+```javascript
+const path = require('path');
+module.exports = {
+    entry:{
+        index:'./src/index.js',
+        other:'./src/other.js'
+    },
+    output:{
+        filename:'[name].js',
+        path: path.resolve(__dirname, "dist")
+    }
+}
+```
+
+
+
+**插件安装**
 
 安装在开发环境：npm install  xxx  -D 
 
 安装在生产环境：npm  install xxx
 
-
-
-插件
-
-```javascript
+```
 //把打包后的文件自动引入指定html文件中
 npm install html-webpack-plugin --D
 
@@ -51,26 +97,92 @@ npm install webpack-dev-server --D  //创建本地服务器，自动重新构建
 
 
 
-新建webpack.config.js配置文件
-
-
-
-多入口多出口文件的配置：
+html-webpack-plugin的相关配置：
 
 ```javascript
-entry:{
-    index:'./src/index.js',
-    other:'./src/other.js'
-},
-output:{
-    filename:'[name].js',
-    path: path.resolve(__dirname, "dist")
-},
+const HtmlWebpackPlugin = require('html-webpack-plugin');
+
+module.exports = {
+    ...
+    plugins:[
+        new HtmlWebpackPlugin({
+            template: './index.html',   //依赖的模板文件
+            hash: true,   //是否加hash值
+            filename: 'index.html',  //打包后的html文件名
+            chunks: ['index'],
+            minify: {
+                removeRedundantAttributes: true, //删除引号
+                collapseWhitespacee: true,  //删除空格
+            }
+    	})
+    ]
+}
+
+多个文件的处理：
+let htmlPlugin = ['index', 'other'].map((chunkName) => {
+  return new HtmlWebpackPlugin({
+    template: `./${chunkName}.html`,
+    filename: `${chunkName}.html`,
+    chunks: [chunkName]
+  })
+})
+
+module.exports = {
+    ...
+    plugins:[
+        ...htmlPlugin
+    ]
+}
+
+```
+
+clean-webpack-plugin的相关配置：
+
+```javascript
+const { CleanWebpackPlugin } = require('clean-webpack-plugin');
+
+module.exports = {
+    ...
+    plugins:[
+        new CleanWebpackPlugin(),   //清空输出的目录  ---清空dist下所有文件
+        //清空指定文件
+        new CleanWebpackPlugin({
+    		cleanOnceBeforeBuildPatterns: ['test/*', '!test/a.js']  //清空test文件夹下不是a.js的文件
+    	})
+    ]
+}
+```
+
+dev-server配置：
+
+```javascript
+devServer: {   //在内存中打包，所有内容是在根目录
+    port: 8181,
+    open: true,
+    compress: true,
+    contentBase: 'static',   //启动static下的静态资源文件
+    hot: true,  //自动刷新
+    before: function (app, server) {    //app表示启动一个端口为8181的服务
+      app.get('/api/user', function (req, res) {
+        res.json({ custom: 'reponse' })
+      })
+    }
+    // proxy: {  //启动代理
+    //   '/api': {
+    //     target: 'http://localhost:8000',
+    //     secure: false,  //若为ture代表以https开头
+    //     pathRewrite: {
+    //       '^/api': ''
+    //     },  //重写地址
+    //     changeOrigin: true     //把请求头当中的host改成请求的服务器地址
+    //   }
+    // }
+}
 ```
 
 
 
-
+**解析css文件等**
 
 ```javascript
 解析css:   css-loader     style-loader
@@ -110,15 +222,23 @@ module: {
 
 
 
-处理css私有前缀：postcss-loader 【样式处理工具】         autoprefixer【私有前缀的插件】
+**处理css私有前缀**
 
-postcss.config.js配置
+插件：postcss-loader 【样式处理工具】         autoprefixer【私有前缀的插件】
 
-.browserslistrc文件：cover 99.5%
+配置postcss.config.js
+
+```javascript
+
+```
+
+配置.browserslistrc文件：cover 99.5%
 
 
 
-分离css：mini-css-extract-plugin
+**分离css**
+
+插件：mini-css-extract-plugin
 
 ```javascript
 const MiniCssExtractPlugin = require('mini-css-extract-plugin')
@@ -152,6 +272,8 @@ module.exports = {
 
 
 
+**压缩css文件和js文件**
+
 压缩css：npm install optimize-css-assets-webpack-plugin【生产环境】
 
 压缩js：npm install terser-webpack-plugin 【生产环境】
@@ -173,7 +295,9 @@ module.exports = {
 
 
 
-处理图片：file-loader  url-loader  
+**处理图片**
+
+插件：file-loader  url-loader  
 
 file-loader把图片解析成文件输出，url-loader把小图片解析成base64插入；
 
@@ -204,9 +328,7 @@ file-loader把图片解析成文件输出，url-loader把小图片解析成base6
 }
 ```
 
-
-
-小icon
+小icon配置：
 
 ```javascript
 {
@@ -216,6 +338,8 @@ file-loader把图片解析成文件输出，url-loader把小图片解析成base6
 ```
 
 
+
+**babel**
 
 @babel/core   babel的核心模块
 
@@ -234,8 +358,6 @@ npm install @babel/core babel-loader @babel/preset-env -D
       exclude: /node_modules/   //排除需要编译js文件的目录
 }
 ```
-
-
 
 npm install core-js@3  --save
 
@@ -258,21 +380,19 @@ npm install core-js@3  --save
 
 
 
-
-
 装饰器：语法糖的写法
 
 
 
+**跨域**
 
-
-跨域：
+插件：
 
 ```
 npm install express -D
 ```
 
-server.js：
+配置server.js模拟后台接口：
 
 ```javascript
 let express = require('express')
@@ -311,12 +431,10 @@ devServer: {
         //原本host:localhost:8181   设置该属性后为localhost:8000
       }
     }
-  },
+}
 ```
 
-
-
-不需要服务的时候，自己去造数据
+也可以使用before，这样就不需要服务自己去造数据做一些处理。
 
 ```javascript
 devServer: {   
@@ -342,9 +460,7 @@ devServer: {
 - providePlugin——给每个模块注入变量；
 - 暴露在全局下expose-loader；
 
-
-
-add-asset-html-cdn-webpack-plugin
+1、add-asset-html-cdn-webpack-plugin
 
 ```javascript
 const AddAssetHtmlCdnWebpackPlugin  = require('add-asset-html-cdn-webpack-plugin')
@@ -361,9 +477,7 @@ modules.export = {
 }
 ```
 
-
-
-providePlugin
+2、providePlugin
 
 ```javascript
 npm install lodash -D
@@ -380,11 +494,13 @@ plugins:[
 ]
 ```
 
+3、expose-loader
 
+插件：
 
-expose-loader
-
+```
 npm  install  expose-loader  -D
+```
 
 ```javascript
 //配置
@@ -404,13 +520,11 @@ require('expose-loader?$!jquery')        //jquery放在全局的$
 
 
 
-
-
 **eslint.js**
 
 引入.eslintrc.json文件
 
-安装插件：eslint  eslint-loader
+插件：eslint  eslint-loader
 
 ```javascript
 rules:[
@@ -422,7 +536,7 @@ rules:[
 ]
 ```
 
-npx eslint  --init  => 配置文件
+npx eslint  --init  => 生成配置文件
 
 
 
@@ -438,3 +552,4 @@ module.exports = {
 }
 ```
 
+可以定位到报错具体原因和行数

@@ -20,7 +20,7 @@ vue不是MVVM框架，$ref
 
 数据劫持——重写方法，通知视图更新
 
-默认会递归去调用define.property进行拦截，性能差 => proxy
+默认会递归去调用defineproperty进行拦截，性能差 => proxy
 
 
 
@@ -32,12 +32,36 @@ vue.$set原理：splice
 
 ```javascript
 //防止对象被重复劫持    使用方法
-Object.definedProterty(value,"__ob__",{
+Object.defineProterty(value,"__ob__",{
     enumberable:false,  //不能被枚举,不能被循环出来
     configurable:false, 
     value:this
 })
 ```
+
+
+
+初始化数据initData
+
+观察数据observe
+
+
+
+
+
+
+
+---------------
+
+vue2中使用object.defineProperty来实现数据双向绑定，vue3中使用es6新特性的proxy实现。
+
+
+
+
+
+-----------------------
+
+
 
 
 
@@ -63,7 +87,7 @@ let ast = parseHTML(template);
 let code = generate(ast);
 
 //4.将字符串变为函数
-let render = new Function(`with(this) {return ${code}}`);  //限制取值范围，通过with来取值，稍后调用render函数就剋通过改变this，让这个函数内部取到结果了
+let render = new Function(`with(this) {return ${code}}`);  //限制取值范围，通过with来取值，稍后调用render函数就可以通过改变this，让这个函数内部取到结果了
 ----理解：with包裹，this作用域取值
 ```
 
