@@ -142,7 +142,7 @@ console.log(5);
 
 2、宏任务的优先级按照谁先达到执行的时间
 
-微任务：Promise / async / await
+微任务：Promise（resolve/reject） /  (async / await)【此处的async是修饰await的】 
 
 宏任务：事件绑定 / 定时器 / ajax异步请求 / GUI渲染任务局
 
@@ -150,8 +150,8 @@ console.log(5);
 
 ```javascript
 await async2();
-console.log(123);
-//await是异步微任务，async2()先执行，当async返回成功状态后，把下面代码执行
+console.log(123);   //该代码是一个异步微任务，等待await后面promise实例是成功状态才执行。
+//async2()先执行，当async返回成功状态后，把下面代码执行
 
 new Promise(function(resolve){
 	..
@@ -159,7 +159,7 @@ new Promise(function(resolve){
 }).then(function(){
 	..
 })
-//promise方法立即执行，resolve()是异步微任务，等待then把成功失败的方法放到池子里再通知方法执行
+//promise方法立即执行，resolve()/reject()是异步微任务，等待then把成功失败的方法存储起来再通知方法执行
 //resolve()控制then存放的方法执行
 ```
 
@@ -243,3 +243,69 @@ setTimeout
 解析过程：
 
 ![](/img/blog/render/时间循环机制.png)
+
+练习3：
+
+```javascript
+function func1(){
+    console.log('func1 start');
+    return new Promise(resolve=>{
+        resolve('ok');
+    })
+}
+function func2(){
+    console.log('func2 start');
+    return new Promise(resolve=>{
+        setTimeout(()=>{
+            resolve('ok');
+        },10)
+    })
+}
+console.log(1);
+setTimeout(async()=>{
+    console.log(2);
+    await func1();
+    console.log(3);
+},20)
+for(let i=0;i<90000000;i++){}  //循环大约需要80ms左右
+console.log(4);
+func1().then(result=>{
+    console.log(5);
+})
+func2().then(result=>{
+    console.log(6);
+})
+setTimeout(()=>{
+    console.log(7)
+},0)
+console.log(8)
+```
+
+答案：1   4   'func1 start'     'func2 start'   8   5   2   'func1 start'    3    7   6
+
+解析：
+
+```javascript
+=>创建函数func1
+=>创建函数func2
+=>输出 1
+=>创建定时器---------->宏任务1:20ms后执行
+=>for循环 80ms左右------------------>循环结束，宏任务1已到达时间
+=>输出 4
+=>func1执行---->输出 'func1 start'
+  返回promise实例----->resolve--------------------->微任务1
+=>func2执行---->输出 'func2 start'
+  返回promise实例----->setTimeout------------------>宏任务2:10ms后执行
+=>创建定时器---------->宏任务3：5~6ms后执行
+=>输出 8
+
+=>微任务1执行--->输出 5
+=>宏任务1执行
+	=>输出 2
+    =>func1执行---->输出 'func1 start'
+	  await---------->微任务2
+	  =>微任务2执行------------>输出 3
+=>宏任务3执行--->输出 7
+=>宏任务2执行--->输出 6 
+```
+
