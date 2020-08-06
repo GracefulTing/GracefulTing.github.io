@@ -1,4 +1,4 @@
-### Promise
+## Promise
 
 Promise是ES6新增的内置类，是一个“承诺”设计模式，主要目的是用来解决JS异步编程中的回调地狱问题。
 
@@ -18,7 +18,7 @@ setTimeout(()=>{
 },1000)
 ```
 
-由上可见，在当前回调函数中嵌套新的回调函数，在新的回调函数中继续嵌套，这也就是所谓回调地狱。那么有什么解决方案呢？下面来尝试下reduce解决：
+基本上就会这样去写代码。由上可见，在当前回调函数中嵌套新的回调函数，在新的回调函数中继续嵌套，这也就是所谓回调地狱。那么有什么解决方案呢？下面来尝试下reduce解决：
 
 ```javascript
 let arr = [1000,2000,3000],
@@ -71,11 +71,12 @@ delay(1000).then(()=>{
 
 
 
-Promise是用来管控异步编程的，new Promise本身不是异步的，执行它的时候会立即把executor函数执行，只不过我们经常在executor中管控一个异步操作。
-
-executor函数中有两个默认的形参：resolve和reject函数；
-
-executor函数中一般用来管理一个异步编程（当然只写同步的也可以）；
+> Promise是用来管控异步编程的，new Promise本身不是异步的，执行它的时候会立即把executor函数执行，只不过我们经常在executor中管控一个异步操作。
+>
+> executor函数中有两个默认的形参：resolve和reject函数；
+>
+> executor函数中一般用来管理一个异步编程（当然只写同步的也可以）；
+>
 
 
 
@@ -109,37 +110,37 @@ Promise.race([promise1,promise2,...]);   //=>返回一个新的实例
 ```javascript
 function f1() {
     return Promise.resolve(1);
-  }
+}
 
-  function f2() {
+function f2() {
     return new Promise((resolve, reject) => {
       setTimeout(() => {
         resolve(2);
       }, 2000)
     })
-  }
+}
 
-  function f3() {
+function f3() {
     return new Promise((resolve, reject) => {
       setTimeout(() => {
         resolve(3);
       }, 1000)
     })
-  }
+}
 
-  Promise.all([f1(), f2(), f3()]).then(values => {
+Promise.all([f1(), f2(), f3()]).then(values => {
     //values => array 按照顺序存储每一个实例返回的结果
     console.log(values);    //[1,2,3]
-  }).catch(reason => {
+}).catch(reason => {
     //一旦有失败的，整体都是失败的，存储的是当前失败的实例的原因
     console.log(reason)
-  })
+})
 
-  Promise.race([f2(), f3()]).then(values => {
+Promise.race([f2(), f3()]).then(values => {
     console.log(values);    //3
-  }).catch(reason => {
+}).catch(reason => {
     console.log(reason)
-  })
+})
 ```
 
 resolve / reject 的执行是异步编程，需要等到then把方法存好之后，在根据状态通知then存放的某个方法执行；状态为成功后调用第一个回调函数执行，失败调用第二个回调函数执行；
@@ -208,8 +209,6 @@ Promise.resolve('ok').then(result=>{
 })
 ```
 
-
-
 finally：无论成功还是失败都会执行
 
 ```javascript
@@ -224,7 +223,7 @@ Promise.reject(100).then(value=>{
 
 
 
-### async和await
+## async和await
 
 async和await是ES7中提供的，是对promise的一个补充（Promise语法糖）。
 
@@ -278,6 +277,43 @@ console.log(1);   //1  2
 ```
 
 
+
+练习：
+
+```javascript
+// promise成功态，走向下一个then的成功态
+read('./name.txt').then((data) => {
+  return read(data)
+}, (err) => {
+
+}).then((data) => {
+  console.log('------', data)  // 10
+}, err => {
+  console.log('---------', err+'错误')
+})
+
+// promise失败态，走向下一个then的失败态
+read('./name.txt').then((data) => {
+  return read(data+'1')
+}, (err) => {
+
+}).then((data) => {
+  console.log('------', data)  // 10
+}, err => {
+  console.log('---------', err+'错误') // Error: ENOENT: no such file or directory, open 'age.txt1'错误
+})
+
+// 读取错误文件，执行reject(),当执行了错误状态的回调函数时，会默认返回一个undefined，普通值走向下一个then的成功方法
+read('./name123.txt').then((data) => {
+  return read(data)
+}, (err) => {
+   // return undefined
+}).then((data) => {
+  console.log('------', data)  // ------ undefined
+}, err => {
+  console.log('---------', err+'错误')
+})
+```
 
 
 
