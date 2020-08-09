@@ -1,0 +1,205 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"><meta name="author" content="GracefulTing"><meta name="renderer" content="webkit"><meta name="copyright" content="GracefulTing"><meta name="keywords" content="Welcome to GracefulTing's blog"><meta name="description" content=""><meta name="Cache-Control" content="no-cache"><meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"><title>axios封装 · GracefulTing's Blog</title><link rel="stylesheet" href="/css/style.css?v=2018.7.9"><link rel="stylesheet" href="/css/animation.css?v=2018.7.9"><link rel="icon" href="/img/assets/favicon.ico"><link rel="stylesheet" href="https://cdn.bootcss.com/font-awesome/4.7.0/css/font-awesome.min.css?version=1.5.6"><!-- scripts--><script>(function( w ){
+  "use strict";
+  // rel=preload support test
+  if( !w.loadCSS ){
+    w.loadCSS = function(){};
+  }
+  // define on the loadCSS obj
+  var rp = loadCSS.relpreload = {};
+  // rel=preload feature support test
+  // runs once and returns a function for compat purposes
+  rp.support = (function(){
+    var ret;
+    try {
+      ret = w.document.createElement( "link" ).relList.supports( "preload" );
+    } catch (e) {
+      ret = false;
+    }
+    return function(){
+      return ret;
+    };
+  })();
+
+  // if preload isn't supported, get an asynchronous load by using a non-matching media attribute
+  // then change that media back to its intended value on load
+  rp.bindMediaToggle = function( link ){
+    // remember existing media attr for ultimate state, or default to 'all'
+    var finalMedia = link.media || "all";
+
+    function enableStylesheet(){
+      link.media = finalMedia;
+    }
+
+    // bind load handlers to enable media
+    if( link.addEventListener ){
+      link.addEventListener( "load", enableStylesheet );
+    } else if( link.attachEvent ){
+      link.attachEvent( "onload", enableStylesheet );
+    }
+
+    // Set rel and non-applicable media type to start an async request
+    // note: timeout allows this to happen async to let rendering continue in IE
+    setTimeout(function(){
+      link.rel = "stylesheet";
+      link.media = "only x";
+    });
+    // also enable media after 3 seconds,
+    // which will catch very old browsers (android 2.x, old firefox) that don't support onload on link
+    setTimeout( enableStylesheet, 3000 );
+  };
+
+  // loop through link elements in DOM
+  rp.poly = function(){
+    // double check this to prevent external calls from running
+    if( rp.support() ){
+      return;
+    }
+    var links = w.document.getElementsByTagName( "link" );
+    for( var i = 0; i < links.length; i++ ){
+      var link = links[ i ];
+      // qualify links to those with rel=preload and as=style attrs
+      if( link.rel === "preload" && link.getAttribute( "as" ) === "style" && !link.getAttribute( "data-loadcss" ) ){
+        // prevent rerunning on link
+        link.setAttribute( "data-loadcss", true );
+        // bind listeners to toggle media back
+        rp.bindMediaToggle( link );
+      }
+    }
+  };
+
+  // if unsupported, run the polyfill
+  if( !rp.support() ){
+    // run once at least
+    rp.poly();
+
+    // rerun poly on an interval until onload
+    var run = w.setInterval( rp.poly, 500 );
+    if( w.addEventListener ){
+      w.addEventListener( "load", function(){
+        rp.poly();
+        w.clearInterval( run );
+      } );
+    } else if( w.attachEvent ){
+      w.attachEvent( "onload", function(){
+        rp.poly();
+        w.clearInterval( run );
+      } );
+    }
+  }
+
+
+  // commonjs
+  if( typeof exports !== "undefined" ){
+    exports.loadCSS = loadCSS;
+  }
+  else {
+    w.loadCSS = loadCSS;
+  }
+}( typeof global !== "undefined" ? global : this ) );</script><script src="https://cdn.jsdelivr.net/npm/jquery@3.3.1/dist/jquery.min.js" defer></script><script src="/js/main.js?v=2018.7.9" defer></script><!-- fancybox--><link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.2.5/jquery.fancybox.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'"><script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.2.5/jquery.fancybox.min.js" defer></script><!-- busuanzi--><script async src="//dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script><meta name="generator" content="Hexo 4.2.1"></head><body><section class="profile-close" id="cxo-profile"><div class="profile-avatar"><i class="fa fa-caret-left"></i><img src="/img/assets/cat.png"></div><!--.profile-saying
+  i.fa.fa-comment
+  .saying--><div class="cxo-profile-inner"><div class="profile-name">Grace</div><div class="profile-signature">The harder, the more fortunate</div><div class="read-progress"></div></div></section><header id="cxo-intro" style="height: 70vh;background-image: url(/img/intro/index-bg.png);"><nav id="cxo-intro-nav"><section><div class="intro-nav-title"><a href="/">GracefulTing's Blog</a></div><div class="intro-nav-label-box"><a href="/">Home</a><a href="/about/">About</a><a href="/archives/">Archives</a><a href="/tags/">Tags</a></div><i class="fa fa-bars intro-nav-menu"><div class="intro-nav-drop"><a href="/">Home</a><a href="/about/">About</a><a href="/archives/">Archives</a><a href="/tags/">Tags</a></div></i><div class="clear"></div></section></nav><h1 class="post-title">axios封装</h1><div class="post-intros"><div class="post-intro-meta"><span class="post-intro-time"><i class="post-intro-calendar fa fa-calendar"></i><span>2020-08-09</span></span></div></div></header><article class="cxo-up" id="cxo-content-outer"><section id="cxo-content-inner"><article class="article-entry" id="post"><p>Ajax：前后端数据通信重要的手段，基于ajax从服务器获取数据，基于客户端实现数据的渲染。</p>
+<p>Fetch：新的通信方案，和ajax不是同一套机制。</p>
+<p>跨域处理：</p>
+<ul>
+<li>jsonp</li>
+<li>iframe(document.domain / location.hash….)</li>
+<li>postMessage</li>
+<li>cors</li>
+<li>proxy</li>
+</ul>
+<p><strong>服务器渲染</strong></p>
+<p>弊端：</p>
+<ul>
+<li>重后台，轻前端（分工不均/前端弱化）；</li>
+<li>服务器压力太大；</li>
+<li>无法实现局部刷新（某个区域的数据更新都需要整个页面的刷新 =&gt; 全局刷新）；</li>
+</ul>
+<p>优势：</p>
+<ul>
+<li>有利于SEO优化，页面源代码种可以看到所有动态绑定的内容；</li>
+<li>如果服务器抗压能力很强（含处理速度快），则页面渲染速度很快；</li>
+</ul>
+<p><strong>客户端渲染</strong></p>
+<p>弊端：</p>
+<ul>
+<li>不利于SEO优化（基于JS完成的数据绑定，页面源代码中是不存在的）；</li>
+<li>需要至少请求两次：一次是资源页面的请求，一次是数据的请求，才能把内容呈现给用户（如果网络慢，则白屏时间较长）；</li>
+</ul>
+<p>优势：</p>
+<ul>
+<li>前端和后端二分天下（不分轻重）；</li>
+<li>服务器压力降低很多；</li>
+<li>可以实现局部刷新；</li>
+</ul>
+<p>当代项目架构模型：</p>
+<ul>
+<li><p>基于node.js的服务器渲染（全服务器渲染）=&gt; 需要考虑SEO；</p>
+</li>
+<li><p>客户端渲染（纯客户端渲染）：服务器用啥语言和我们没关系，只需要知道基于ajax可以拿到数据即可；</p>
+<p>=&gt; 前端骨架屏（前端基于loading或者骨架背景等在数据请求回来之前做一个处理，来减少白屏时间）</p>
+</li>
+<li><p>半客户端渲染</p>
+<p>首屏信息都是基于服务器渲染的（服务器骨架屏），第一次加载完后期在渲染还是基于ajax客户端渲染（node.js）；</p>
+<p>其它屏幕都是客户端渲染</p>
+</li>
+<li><p>客户端   中间层【node.js】    大数据分析层</p>
+</li>
+</ul>
+<p><strong>Ajax</strong></p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//创建一个XHR对象(AJAX实例)</span></span><br><span class="line"><span class="keyword">let</span> xhr = <span class="keyword">new</span> XMLHttpRequest;</span><br><span class="line"></span><br><span class="line"><span class="comment">//打开请求API地址(发送之前的配置信息)</span></span><br><span class="line"><span class="comment">//xhr.open([method],[url],[async 默认true],[username],[userpass])</span></span><br><span class="line"><span class="comment">//请求方法：GET系列(get/head/delete/options)  POST系列(post/put)</span></span><br><span class="line"><span class="comment">//get请求传递给服务器的信息一般基于"URL问号参数"</span></span><br><span class="line"><span class="comment">//post请求传递给服务器的信息Ibanez基于"请求主体"</span></span><br><span class="line"><span class="comment">//所有请求方式都可以基于请求头把信息传递给服务器</span></span><br><span class="line">xhr.open(<span class="string">'get'</span>, <span class="string">'./data.json'</span>);</span><br><span class="line"></span><br><span class="line"><span class="comment">//设置请求头信息</span></span><br><span class="line">xhr.setRequestHeader(<span class="string">'xxx'</span>, <span class="string">'test'</span>);</span><br><span class="line"></span><br><span class="line"><span class="comment">//当ajax状态改变,监听请求的进度  </span></span><br><span class="line"><span class="comment">//xhr.readyState  2:响应头信息返回   4:响应主体信息返回</span></span><br><span class="line"><span class="comment">//xhr.status   不是所有的请求都一定成功,网络状态码记录了这个结果</span></span><br><span class="line">xhr.onreadystatechange = <span class="function"><span class="keyword">function</span> (<span class="params"></span>) </span>&#123;</span><br><span class="line">  <span class="keyword">if</span> (xhr.readyState === <span class="number">4</span> &amp;&amp; <span class="regexp">/^2\d&#123;2&#125;/</span>.test(xhr.status)) &#123;</span><br><span class="line">    <span class="comment">//获取响应头信息</span></span><br><span class="line">    <span class="comment">//xhr.getResponseHeader('date');</span></span><br><span class="line">    <span class="comment">//xhr.getAllResponseHeaders();</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">//获取响应主体信息</span></span><br><span class="line">    <span class="comment">//xhr.responseText;</span></span><br><span class="line"></span><br><span class="line">    <span class="built_in">console</span>.log(<span class="built_in">JSON</span>.parse(xhr.responseText))</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//发送请求</span></span><br><span class="line"><span class="comment">//xhr.send([请求主体信息])</span></span><br><span class="line">xhr.send();</span><br></pre></td></tr></table></figure>
+
+
+
+<p>请求接口测试的工具：postman</p>
+<p><strong>axios</strong></p>
+<p>axios：基于Promise封装的ajax库（核心还是ajax的四步操作）</p>
+<ul>
+<li><p>ajax请求一般都采用异步</p>
+<ul>
+<li><p>ajax的串行：第一个接口请求成功，才能继续请求第二个…</p>
+</li>
+<li><p>ajax的并行：同时发送多个接口请求，当所有接口都请求成功，再去执行某些事情  =&gt; Promise.all</p>
+</li>
+</ul>
+</li>
+<li><p>基于Promise管理ajax的异步操作</p>
+</li>
+</ul>
+<p>fetch：浏览器新增的API，默认基于Promise管理的（核心不是XMLHttpRequest）</p>
+<p><strong>axios基础使用</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">axios([config])：返回的结果都是一个Promise实例</span><br><span class="line"></span><br><span class="line">axios([url],[config])</span><br><span class="line"></span><br><span class="line">axios.get&#x2F;head&#x2F;delete&#x2F;options([url],[config])</span><br><span class="line"></span><br><span class="line">axios.post&#x2F;put([url],[data],[config])</span><br></pre></td></tr></table></figure>
+
+<p>URLSearchParams：浏览器新增的处理问号参数的类</p>
+<p><strong>axios的二次配置</strong></p>
+<ul>
+<li>​    拦截器</li>
+<li>​    常规配置</li>
+</ul>
+<p>真实项目中，很多请求配置参数一样，提取公共配置：</p>
+<ul>
+<li>axios库中的默认配置</li>
+<li>提取的公共参数配置：axios.defaults</li>
+<li>发送请求时单独写的配置：axios.get([url],[config])</li>
+</ul>
+<p>优先级自下而上（最后一个优先级最高）</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//基本配置</span></span><br><span class="line">axios.defaults.baseURL = <span class="string">""</span>;</span><br><span class="line">axios.defaults.timeout = <span class="number">0</span>;</span><br><span class="line">axios.defaults.withCredentials = <span class="literal">true</span>;</span><br><span class="line"><span class="comment">//对于部分请求，传递给服务的格式如果不是下面的格式</span></span><br><span class="line">axios.default.headers = &#123;</span><br><span class="line">    <span class="string">'Content-Type'</span>:<span class="string">'application/x-www-form-urlencoded'</span></span><br><span class="line">&#125;;</span><br><span class="line">axios.defaults.transformRequest = <span class="function"><span class="params">data</span> =&gt;</span> Qs.stringify(data);</span><br><span class="line">axios.defaults.validateStatus = <span class="function"><span class="params">status</span> =&gt;</span> (status &gt;= <span class="number">200</span> &amp;&amp; status &lt;= <span class="number">300</span>);</span><br></pre></td></tr></table></figure>
+
+
+
+<p>需求1：需要基于环境变量（开发/测试/生产）控制地址前缀不一样；</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> env = process.env.NODE_ENV;   <span class="comment">//获取webpack/package.json中配置的环境变量</span></span><br></pre></td></tr></table></figure>
+
+
+
+<p>请求拦截器：在我们把数据发送给服务器之前，拦截到我们设置的config，然后二次配置；</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">axios.interceptors.request.use(<span class="function"><span class="params">config</span> =&gt;</span> &#123;</span><br><span class="line">    <span class="comment">//config:存储现有配置项</span></span><br><span class="line">    <span class="keyword">let</span> token = localStorage.getItem(<span class="string">'token'</span>);</span><br><span class="line">    token &amp;&amp; (config.headers.Autorization = token);</span><br><span class="line">    <span class="keyword">return</span> config;</span><br><span class="line">&#125;)</span><br></pre></td></tr></table></figure>
+
+<p>响应拦截器：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line">axios.interceptors.response.use(<span class="function"><span class="params">response</span>=&gt;</span>&#123;</span><br><span class="line">    <span class="comment">//response:成功返回的结果</span></span><br><span class="line">    <span class="keyword">return</span> response.data;</span><br><span class="line">&#125;,reason=&gt;&#123;</span><br><span class="line">    <span class="comment">//失败返回的信息</span></span><br><span class="line">    <span class="comment">//统一在这里针对于失败的结果做不同的提示后处理</span></span><br><span class="line">    <span class="keyword">if</span>(reason.response)&#123;</span><br><span class="line">        <span class="comment">//服务器返回信息，只要状态码不是2开始的：根据不同状态码做不同的提示</span></span><br><span class="line">        <span class="keyword">switch</span>(reason.response.status)&#123;</span><br><span class="line">            <span class="keyword">case</span> <span class="number">401</span>:</span><br><span class="line">                <span class="comment">//权限问题（后台反馈）</span></span><br><span class="line">                <span class="keyword">break</span>;</span><br><span class="line">            <span class="keyword">case</span> <span class="number">403</span>:</span><br><span class="line">                <span class="comment">//token过期等</span></span><br><span class="line">                <span class="keyword">break</span>;</span><br><span class="line">            <span class="keyword">case</span> <span class="number">404</span>:</span><br><span class="line">                <span class="comment">//地址错误</span></span><br><span class="line">                <span class="keyword">break</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;<span class="keyword">else</span>&#123;</span><br><span class="line">        <span class="comment">//需要检验是否断网</span></span><br><span class="line">        <span class="keyword">if</span>(!navigator.onLine)&#123;</span><br><span class="line">            </span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">       </span><br><span class="line">    <span class="keyword">return</span> <span class="built_in">Promise</span>.reject(reason.message);</span><br><span class="line">&#125;)</span><br></pre></td></tr></table></figure>
+
+
+
+
+
+<p><strong>axios源码</strong>（基于Promise封装一个ajax库）</p>
+</article><!-- lincense--><div class="post-paginator"><a class="nextSlogan" href="/2020/08/09/%E5%9B%BE%E7%89%87%E6%87%92%E5%8A%A0%E8%BD%BD/" title="图片懒加载"><span>NextPost ></span><br><span class="nextTitle">图片懒加载</span></a><div class="clear"></div></div><div id="comment"></div></section></article><footer id="cxo-footer-outer"><div id="cxo-footer-inner"><p class="footer-container"><span>Site by </span><a href="http://hexo.io" target="_blank" rel="noopener"><span>Hexo</span></a><span> | theme </span><a href="https://github.com/Longlongyu/hexo-theme-Cxo" target="_blank" rel="noopener"><span>Cxo</span></a></p><i class="fa fa-user"> </i><span id="busuanzi_value_site_uv"></span><span> | </span><i class="fa fa-eye"> </i><span id="busuanzi_value_site_pv"></span></div></footer><!-- catelog--><div class="toc-wrapper" style="top: 70vh;"><div class="toc-catalog"><i class="fa fa-list"> </i><span>CATALOG</span></div></div><!-- top--><i class="fa fa-arrow-up close" id="go-up" aria-hidden="true"></i></body></html>

@@ -97,7 +97,62 @@
   }
 }( typeof global !== "undefined" ? global : this ) );</script><script src="https://cdn.jsdelivr.net/npm/jquery@3.3.1/dist/jquery.min.js" defer></script><script src="/js/main.js?v=2018.7.9" defer></script><!-- fancybox--><link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.2.5/jquery.fancybox.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'"><script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.2.5/jquery.fancybox.min.js" defer></script><!-- busuanzi--><script async src="//dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script><meta name="generator" content="Hexo 4.2.1"></head><body><section class="profile-close" id="cxo-profile"><div class="profile-avatar"><i class="fa fa-caret-left"></i><img src="/img/assets/cat.png"></div><!--.profile-saying
   i.fa.fa-comment
-  .saying--><div class="cxo-profile-inner"><div class="profile-name">Grace</div><div class="profile-signature">The harder, the more fortunate</div><div class="read-progress"></div></div></section><header id="cxo-intro" style="height: 70vh;background-image: url(/img/intro/index-bg.png);"><nav id="cxo-intro-nav"><section><div class="intro-nav-title"><a href="/">GracefulTing's Blog</a></div><div class="intro-nav-label-box"><a href="/">Home</a><a href="/about/">About</a><a href="/archives/">Archives</a><a href="/tags/">Tags</a></div><i class="fa fa-bars intro-nav-menu"><div class="intro-nav-drop"><a href="/">Home</a><a href="/about/">About</a><a href="/archives/">Archives</a><a href="/tags/">Tags</a></div></i><div class="clear"></div></section></nav><h1>GracefulTing's Blog</h1><h5>Welcome to my Blog!</h5><div class="intro-social"><a class="fa fa-github" href="//github.com/" target="_blank" title="github"></a><a class="fa fa-weibo" href="//www.weibo.com" target="_blank" title="weibo"></a><a class="fa fa-facebook" href="//www.facebook.com" target="_blank" title="facebook"></a><a class="fa fa-twitter" href="//twitter.com" target="_blank" title="twitter"></a><a class="fa fa-rss" href="/atom.xml" target="_blank" title="rss"></a></div></header><article class="cxo-up" id="cxo-content-outer"><section id="cxo-content-inner"><section id="recent-posts"><div class="recent-post-item"><div class="post-title"><a href="/2020/07/15/%E7%AE%97%E6%B3%95/">算法</a></div><div class="post-time"><i class="fa fa-table"></i><time datetime="2020-07-15T13:15:22.779Z">2020-07-15</time></div><div class="recent-post-content">算法12345678910111213//交换值1-中间变量function swap(a,b)&#123;    let c=a;    a=b;    b=c;&#125;2-解构[a,b] = [b,a];3:a = a + b;b = a - b;a = a - b;
+  .saying--><div class="cxo-profile-inner"><div class="profile-name">Grace</div><div class="profile-signature">The harder, the more fortunate</div><div class="read-progress"></div></div></section><header id="cxo-intro" style="height: 70vh;background-image: url(/img/intro/index-bg.png);"><nav id="cxo-intro-nav"><section><div class="intro-nav-title"><a href="/">GracefulTing's Blog</a></div><div class="intro-nav-label-box"><a href="/">Home</a><a href="/about/">About</a><a href="/archives/">Archives</a><a href="/tags/">Tags</a></div><i class="fa fa-bars intro-nav-menu"><div class="intro-nav-drop"><a href="/">Home</a><a href="/about/">About</a><a href="/archives/">Archives</a><a href="/tags/">Tags</a></div></i><div class="clear"></div></section></nav><h1>GracefulTing's Blog</h1><h5>Welcome to my Blog!</h5><div class="intro-social"><a class="fa fa-github" href="//github.com/" target="_blank" title="github"></a><a class="fa fa-weibo" href="//www.weibo.com" target="_blank" title="weibo"></a><a class="fa fa-facebook" href="//www.facebook.com" target="_blank" title="facebook"></a><a class="fa fa-twitter" href="//twitter.com" target="_blank" title="twitter"></a><a class="fa fa-rss" href="/atom.xml" target="_blank" title="rss"></a></div></header><article class="cxo-up" id="cxo-content-outer"><section id="cxo-content-inner"><section id="recent-posts"><div class="recent-post-item"><div class="post-title"><a href="/2020/07/26/%E6%B5%85%E8%B0%88%E5%87%BD%E6%95%B0%E7%9A%84%E9%98%B2%E6%8A%96%E5%92%8C%E8%8A%82%E6%B5%81/">浅谈函数的防抖和节流</a></div><div class="post-time"><i class="fa fa-table"></i><time datetime="2020-07-26T06:27:51.613Z">2020-07-26</time></div><div class="recent-post-content">防抖（debounce）
+所谓防抖，就是指触发事件后在 n 秒内函数只能执行一次，如果在 n 秒内又触发了事件，则会重新计算函数执行时间。
+
+通俗点来说，就是指用户频繁触发的时候，只执行一次事件（执行第一次或最后一次）【可以设置频繁的间隔时间】。
+目的：频繁触发中只执行一次；
+应用场景：按钮点击
+模拟情景：当点击按钮的时候，期望500ms后输出hello，那么如果在500ms内疯狂点击多次，会发现最后输出多次hello；
+那么如何在500ms内只触发一次事件，输出一次hello呢？
+思路：设置间隔时间500ms，第一次点击后没有立即执行，等待500ms，观察500ms内是否触发了第二次，如果触 ...</div><div class="read-more"><a class="more" href="/2020/07/26/%E6%B5%85%E8%B0%88%E5%87%BD%E6%95%B0%E7%9A%84%E9%98%B2%E6%8A%96%E5%92%8C%E8%8A%82%E6%B5%81/#more">ReadMore</a></div><hr></div><div class="recent-post-item"><div class="post-title"><a href="/2020/07/26/Call%20&amp;%20Apply%20&amp;%20Bind%E7%9A%84%E7%94%A8%E6%B3%95%E5%92%8C%E5%8C%BA%E5%88%AB/">Call &amp; Apply &amp; Bind的用法和区别</a></div><div class="post-time"><i class="fa fa-table"></i><time datetime="2020-07-26T02:44:36.693Z">2020-07-26</time></div><div class="recent-post-content">函数原型链中的 apply，call 和 bind 方法是 JavaScript 中相当重要的概念，它们都是用来改变函数中的this指向。那关于它们的用法、区别和内部实现，你都知道吗？
+call
+函数基于原型链找到Function.prototype.call方法，并且把它执行，在方法执行时完成了一些功能：
+
+让当前函数执行；
+把函数中的this指向改为第一个传递的实参；
+把传递给call其余的实参当作参数传递给当前函数；
+
+如果一个参数都没有，非严格模式下是让函数中的this指向window，严格模式下指向的是Undefined.
+
+12345678window.name = 'window ...</div><div class="read-more"><a class="more" href="/2020/07/26/Call%20&amp;%20Apply%20&amp;%20Bind%E7%9A%84%E7%94%A8%E6%B3%95%E5%92%8C%E5%8C%BA%E5%88%AB/#more">ReadMore</a></div><hr></div><div class="recent-post-item"><div class="post-title"><a href="/2020/07/24/JS%E7%BB%A7%E6%89%BF/">JS继承</a></div><div class="post-time"><i class="fa fa-table"></i><time datetime="2020-07-24T07:38:09.200Z">2020-07-24</time></div><div class="recent-post-content">在JS语言中，它的继承和其它编程语言不太一样。
+继承的目的：让子类的实例同时也具备父类中私有的属性和公共的方法。
+下面是JS的常见继承方式：
+原型继承：
+原型继承 =&gt; 子类的原型等于父类的实例；
+
+子类的实例，能够用子类私有的和原型上公有的；
+父类的实例，能够用父类私有的和原型上公有的；
+
+
+12345678910111213141516171819//父类function Parent()&#123;    this.x = 1;&#125;Parent.prototype.getX = function getX()&#123;    return this.x;&#125;//子 ...</div><div class="read-more"><a class="more" href="/2020/07/24/JS%E7%BB%A7%E6%89%BF/#more">ReadMore</a></div><hr></div><div class="recent-post-item"><div class="post-title"><a href="/2020/07/22/%E5%8E%9F%E5%9E%8B%E5%92%8C%E5%8E%9F%E5%9E%8B%E9%93%BE%E7%9A%84%E7%BB%83%E4%B9%A0%E9%A2%98/">原型和原型链的练习题</a></div><div class="post-time"><i class="fa fa-table"></i><time datetime="2020-07-22T12:24:03.156Z">2020-07-22</time></div><div class="recent-post-content">No1:
+12345678910111213141516171819function fun()&#123;    this.a=0;    this.b=function()&#123;        alert(this.a);    &#125;&#125;fun.prototype=&#123;    b:function()&#123;        this.a=20;        alert(this.a);    &#125;,    c:function()&#123;        this.a=30;        alert(this.a)    &#125;&#12 ...</div><div class="read-more"><a class="more" href="/2020/07/22/%E5%8E%9F%E5%9E%8B%E5%92%8C%E5%8E%9F%E5%9E%8B%E9%93%BE%E7%9A%84%E7%BB%83%E4%B9%A0%E9%A2%98/#more">ReadMore</a></div><hr></div><div class="recent-post-item"><div class="post-title"><a href="/2020/07/19/JS%E9%AB%98%E9%98%B6%E7%BC%96%E7%A8%8B/">JS高阶编程</a></div><div class="post-time"><i class="fa fa-table"></i><time datetime="2020-07-19T13:22:43.542Z">2020-07-19</time></div><div class="recent-post-content">单例设计模式
+概念：用单独的实例来管理当前事务的相关特征（属性和方法），类似于实现一个分组的特点，而此时obj1和obj2不仅仅叫做一个对象，也被称为命名空间。
+
+基于闭包管控的单例模式称为：高级单例模式，以此来实现早期的模块划分（最早的模块化思想）；
+12345678let module = (function()&#123;    function query()&#123;&#125;    function tools()&#123;&#125;    return &#123;        name:'test',        tools:tools    &#125;&#125 ...</div><div class="read-more"><a class="more" href="/2020/07/19/JS%E9%AB%98%E9%98%B6%E7%BC%96%E7%A8%8B/#more">ReadMore</a></div><hr></div><div class="recent-post-item"><div class="post-title"><a href="/2020/07/19/%E9%9D%A2%E5%90%91%E5%AF%B9%E8%B1%A1%E7%BC%96%E7%A8%8B/">面向对象编程</a></div><div class="post-time"><i class="fa fa-table"></i><time datetime="2020-07-19T06:16:45.381Z">2020-07-19</time></div><div class="recent-post-content">面向对象编程（OOP）html是标记语言
+对象：一种泛指，js中万物皆对象
+类：对象的一种细分
+实例：某一个类别中具体的事物
+具备Symbol(Symbol.iterator)属性的，说明它是可被迭代的数据结构 =&gt; 可以用ES6中的for of循环。
+构造函数构造函数相比普通函数的区别：
+
+构造函数执行，也具备普通函数执行的一面（也会像普通函数一样去执行）；
+
+new函数执行的特殊性：
+
+私有上下文中要做的第一件事情是 “ 创建一个空对象【是当前类的实例对象】 “；———-开辟堆内存AF0
+
+初始化this时，让上下文中的this指向创建的实例对象；———&gt; this执行堆地址A ...</div><div class="read-more"><a class="more" href="/2020/07/19/%E9%9D%A2%E5%90%91%E5%AF%B9%E8%B1%A1%E7%BC%96%E7%A8%8B/#more">ReadMore</a></div><hr></div><div class="recent-post-item"><div class="post-title"><a href="/2020/07/19/JQ%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB/">JQ源码解读</a></div><div class="post-time"><i class="fa fa-table"></i><time datetime="2020-07-19T01:59:30.497Z">2020-07-19</time></div><div class="recent-post-content">闭包源码解读1234567typeof window != 'undefined' ? window : this;/*区分浏览器环境和NODE环境:浏览器端运行传参：windowNODE环境传参：global或者一个模块*/
+
+思想：
+
+在闭包中把一些私有的信息暴露到全局使用：return  / window.xxx = xxx；
+在导入JQ但是并没有把自己的jquery/$暴露出去时，首先会把现有全局中叫做$/jquery的存储起来，防止自己后期设置的$/jquery会替换全局。
+基于noConflict转移JQ对$/jQuery的使用权。
+
+commonJS规范
+JQ中的经典方法摘录检测 ...</div><div class="read-more"><a class="more" href="/2020/07/19/JQ%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB/#more">ReadMore</a></div><hr></div><div class="recent-post-item"><div class="post-title"><a href="/2020/07/15/%E7%AE%97%E6%B3%95/">算法</a></div><div class="post-time"><i class="fa fa-table"></i><time datetime="2020-07-15T13:15:22.779Z">2020-07-15</time></div><div class="recent-post-content">算法12345678910111213//交换值1-中间变量function swap(a,b)&#123;    let c=a;    a=b;    b=c;&#125;2-解构[a,b] = [b,a];3:a = a + b;b = a - b;a = a - b;
 
 冒泡排序：O(n^2)
 12345678910111213141516171819Array.prototype.bubble = function bubble() &#123;    // this -&gt; ary    let _this = this,        flag = false;    //  ...</div><div class="read-more"><a class="more" href="/2020/07/15/%E7%AE%97%E6%B3%95/#more">ReadMore</a></div><hr></div><div class="recent-post-item"><div class="post-title"><a href="/2020/07/15/%E6%B5%8F%E8%A7%88%E5%99%A8%E6%B8%B2%E6%9F%93%E6%9C%BA%E5%88%B6/">浏览器渲染机制</a></div><div class="post-time"><i class="fa fa-table"></i><time datetime="2020-07-15T13:15:22.764Z">2020-07-15</time></div><div class="recent-post-content">浏览器渲染过程一个页面从服务器访问回来后，浏览器拿到页面源代码后做的事情：
@@ -120,67 +175,4 @@
 
 同DOM TREE类似，只是一个处理HTML ...</div><div class="read-more"><a class="more" href="/2020/07/15/%E6%B5%8F%E8%A7%88%E5%99%A8%E6%B8%B2%E6%9F%93%E6%9C%BA%E5%88%B6/#more">ReadMore</a></div><hr></div><div class="recent-post-item"><div class="post-title"><a href="/2020/07/15/0712%E7%BB%83%E4%B9%A0/">0712练习</a></div><div class="post-time"><i class="fa fa-table"></i><time datetime="2020-07-15T13:15:22.758Z">2020-07-15</time></div><div class="recent-post-content">1234let result = 100 + true + 21.2 + null + undefined + "Tencent" + [] + null + 9 + false;console.log(result);=&gt; 100 + 1 =&gt; 101 + 21.2 =&gt; 122.2 + null =&gt; 122.2 + 0 =&gt; 122.2 + NaN = NaN + 'Tencent' =&gt; 'NaNTencent' + '[object Object]' =&gt; 'NaNTencent[object Object]null9false'
 
-1234 ...</div><div class="read-more"><a class="more" href="/2020/07/15/0712%E7%BB%83%E4%B9%A0/#more">ReadMore</a></div><hr></div><div class="recent-post-item"><div class="post-title"><a href="/2020/07/15/%E5%85%B3%E4%BA%8E%E5%A0%86%E6%A0%88%E5%86%85%E5%AD%98%EF%BC%8C%E4%BD%A0%E7%9F%A5%E9%81%93%E5%A4%9A%E5%B0%91%EF%BC%9F/">关于堆栈内存，你知道多少？</a></div><div class="post-time"><i class="fa fa-table"></i><time datetime="2020-07-15T13:15:22.745Z">2020-07-15</time></div><div class="recent-post-content">执行环境栈和执行上下文编写的JS都需要在一个环境中运行：
-
-浏览器（引擎）
-node（基于v8渲染js）
-webview（v8引擎）
-……
-
-执行环境栈 ECStack（Execution Context Stack）：浏览器想要执行JS代码，需要提供一个供代码执行的环境，该环境即为执行环境栈，又称 栈内存（从内存中分配出来的一块内存）
-执行上下文 EC（Execution Context）：在编程语言中，代码执行中为了区分全局和函数执行所处的不同作用域，目的是为了区分每个词法作用域下代码的独立性，形成执行上下文 （代码执行所在的词法作用域，或者代码执行所处的范围）
-在每一个上下文代码执行的时 ...</div><div class="read-more"><a class="more" href="/2020/07/15/%E5%85%B3%E4%BA%8E%E5%A0%86%E6%A0%88%E5%86%85%E5%AD%98%EF%BC%8C%E4%BD%A0%E7%9F%A5%E9%81%93%E5%A4%9A%E5%B0%91%EF%BC%9F/#more">ReadMore</a></div><hr></div><div class="recent-post-item"><div class="post-title"><a href="/2020/07/15/let%20&amp;%20var%E5%8C%BA%E5%88%AB/">let &amp; var区别</a></div><div class="post-time"><i class="fa fa-table"></i><time datetime="2020-07-15T13:15:22.737Z">2020-07-15</time></div><div class="recent-post-content">var &amp; let 的区别
-变量提升：当浏览器开辟出供代码执行的栈内存后，代码并没有自上而下立即执行，而是继续做了一些事情：把当前作用域中所有带var/function关键字的进行提前的声明和定义，即变量提升机制。
-
-带var的只是提前声明：如果只声明不赋值，默认值为undefined；
-带function的不仅声明还定义：准备来说就是创建函数并且让函数与开辟的堆内存地址关联；
-
-
-
-let和const不存在变量提升机制，但是在词法解析阶段也可以得知变量是否为私有变量；
-6种创建变量的方式中，var和function存在变量提升，而let/const/class/import不存在这个 ...</div><div class="read-more"><a class="more" href="/2020/07/15/let%20&amp;%20var%E5%8C%BA%E5%88%AB/#more">ReadMore</a></div><hr></div><div class="recent-post-item"><div class="post-title"><a href="/2020/07/15/JS%E6%95%B0%E6%8D%AE%E7%B1%BB%E5%9E%8B%E4%BB%A5%E5%8F%8A%E7%B1%BB%E5%9E%8B%E8%BD%AC%E6%8D%A2%E6%A2%B3%E7%90%86/">JS数据类型以及类型转换梳理</a></div><div class="post-time"><i class="fa fa-table"></i><time datetime="2020-07-15T13:15:22.728Z">2020-07-15</time></div><div class="recent-post-content">数据类型基本数据类型：number    string    boolean   null    undefined    symbol     bigint
-12345678910111213//symbol —— 不能new ，每次创建都是一个唯一值Symbol(10)===Symbol(10)   //falsebigint：Number.MAX_SAFE_INTEGER 最大安全数Number.MIN_SAFE_INTEGER 最小安全数超过最大安全数后面＋n  类型为bigint//Infinity 正无穷大//NaN:not a number   不是一个有效数字，但是属于numb ...</div><div class="read-more"><a class="more" href="/2020/07/15/JS%E6%95%B0%E6%8D%AE%E7%B1%BB%E5%9E%8B%E4%BB%A5%E5%8F%8A%E7%B1%BB%E5%9E%8B%E8%BD%AC%E6%8D%A2%E6%A2%B3%E7%90%86/#more">ReadMore</a></div><hr></div><div class="recent-post-item"><div class="post-title"><a href="/2020/07/15/JS%E4%B8%AD%E5%90%8C%E6%AD%A5%E5%BC%82%E6%AD%A5%E7%BC%96%E7%A8%8B%E4%BB%A5%E5%8F%8A%E5%AF%B9%E5%AE%8F%E4%BB%BB%E5%8A%A1%E3%80%81%E5%BE%AE%E4%BB%BB%E5%8A%A1%E7%9A%84%E7%90%86%E8%A7%A3/">JS中同步异步编程以及对宏任务、微任务的理解</a></div><div class="post-time"><i class="fa fa-table"></i><time datetime="2020-07-15T13:15:22.722Z">2020-07-15</time></div><div class="recent-post-content">进程和线程进程：一个程序（浏览器新建一个页卡就是一个进程）  【工厂】
-线程：一个进程中可能会包含多个线程，每个线程同时可以做一件事情  【工人】
-同步异步编程真正的同时做多件事情必须依赖多线程，浏览器是多线程的，其中包含：
-
-GUI渲染线程；
-HTTP网络请求线程（并发数 6-7）；
-事件监听、定时器监听…
-
-任务队列是在打开页面的时候就分配了！！！
-JS代码的运行是单线程的：浏览器只分配一个GUI渲染线程去执行JS代码。
-同步编程——对于大部分js来讲，上面代码没有执行完下面代码是不能执行的；
-异步编程——上一件事情没有完成，把它做一些特殊处理，下一件事情继续执行；某些JS代码（事件绑定、 ...</div><div class="read-more"><a class="more" href="/2020/07/15/JS%E4%B8%AD%E5%90%8C%E6%AD%A5%E5%BC%82%E6%AD%A5%E7%BC%96%E7%A8%8B%E4%BB%A5%E5%8F%8A%E5%AF%B9%E5%AE%8F%E4%BB%BB%E5%8A%A1%E3%80%81%E5%BE%AE%E4%BB%BB%E5%8A%A1%E7%9A%84%E7%90%86%E8%A7%A3/#more">ReadMore</a></div><hr></div><div class="recent-post-item"><div class="post-title"><a href="/2020/06/30/%E5%85%B3%E4%BA%8E%E5%8F%98%E9%87%8F%E6%8F%90%E5%8D%87%EF%BC%8C%E4%BD%A0%E7%9F%A5%E9%81%93%E5%A4%9A%E5%B0%91%EF%BC%9F/">关于变量提升，你知道多少？</a></div><div class="post-time"><i class="fa fa-table"></i><time datetime="2020-06-30T13:47:06.620Z">2020-06-30</time></div><div class="recent-post-content">关于变量提升，你知道多少？
-当前上下文中，所有带var和function关键字的进行提前的声明或者定义。
-
-var：只声明不定义；
-function：声明+定义；
-
-变量提升阶段处理过的事情，代码执行阶段不会重复处理。
-
-var obj={…}   //变量提升阶段只是声明obj，并没有开辟堆内存，执行代码阶段开辟内存存储对应值。
-总结：自执行函数不存在变量提升。因为自执行函数是匿名函数，所以无法在所在上下文中变量提升。匿名函数具名化后的名字也只能在函数内部中使用。
-匿名函数具名化（设置了名字）：
-
-设置的名字只能在函数内部使用，外部无法使用（基于这种方式代替严格模式下不兼容的argument ...</div><div class="read-more"><a class="more" href="/2020/06/30/%E5%85%B3%E4%BA%8E%E5%8F%98%E9%87%8F%E6%8F%90%E5%8D%87%EF%BC%8C%E4%BD%A0%E7%9F%A5%E9%81%93%E5%A4%9A%E5%B0%91%EF%BC%9F/#more">ReadMore</a></div><hr></div><div class="recent-post-item"><div class="post-title"><a href="/2020/06/27/%E9%97%AD%E5%8C%85/">闭包</a></div><div class="post-time"><i class="fa fa-table"></i><time datetime="2020-06-27T15:13:14.387Z">2020-06-27</time></div><div class="recent-post-content">闭包闭包是函数运行时产生的机制，函数执行会形成一个全新的私有上下文，可以保护里面的私有变量和外界互不干扰（保护机制），但是大家认为的闭包需要当前上下文不能被出栈释放，这样私有变量及它的值也不会被释放掉（保存机制）。
-
-从性能角度讲，项目中应该减少对闭包的使用（因为闭包会产生不释放的栈内存，过多使用容易导致内存溢出或者降低性能）
-问：闭包好不好？
-答：大量应用闭包肯定会导致内存的消耗，但是闭包保护和保存作用，在真实开发中还是需要的，所以要合理使用。
-作用：
-
-保护（私有变量和外界没有必然联系）
-保存（形成不销毁的栈内存，里面的私有变量等信息保存下来了）
-
-闭包的应用：ECStack / EC / ...</div><div class="read-more"><a class="more" href="/2020/06/27/%E9%97%AD%E5%8C%85/#more">ReadMore</a></div><hr></div><div class="recent-post-item"><div class="post-title"><a href="/2020/06/27/%E5%86%85%E5%AD%98%E9%87%8A%E6%94%BE%E9%97%AE%E9%A2%98/">内存释放问题</a></div><div class="post-time"><i class="fa fa-table"></i><time datetime="2020-06-27T15:13:14.382Z">2020-06-27</time></div><div class="recent-post-content">堆内存释放问题创建一个引用类型值，就会产生一个堆内存。
-如果当前创建的堆内存不被其他东西占用了，浏览器会在空闲时查找每一个内存的引用情况，不被占用的都会被回收释放掉。
-1234let obj = &#123;	age:18&#125;let oop = obj;
-
-此时obj和oop都占用了对象的堆内存，想要释放堆内存，需要手动解除变量盒值的关联（null——空对象指针）
-12obj = null;oop = null;
-
-浏览器的垃圾回收机制：
-
-引用计数（以IE为主）：在某些情况下会导致计数混乱，这样会造成内存不能被释放（内存泄漏）
-
-检测引用（占用）（以谷歌为主）：浏览器在空闲时会依次检 ...</div><div class="read-more"><a class="more" href="/2020/06/27/%E5%86%85%E5%AD%98%E9%87%8A%E6%94%BE%E9%97%AE%E9%A2%98/#more">ReadMore</a></div><hr></div></section><nav class="cxo-page-nav"><a class="extend prev" rel="prev" href="/">&amp;#60; PREV</a><a class="page-number" href="/">1</a><span class="page-number current">2</span><a class="page-number" href="/page/3/">3</a><a class="extend next" rel="next" href="/page/3/">NEXT &amp;#62;</a></nav></section></article><footer id="cxo-footer-outer"><div id="cxo-footer-inner"><p class="footer-container"><span>Site by </span><a href="http://hexo.io" target="_blank" rel="noopener"><span>Hexo</span></a><span> | theme </span><a href="https://github.com/Longlongyu/hexo-theme-Cxo" target="_blank" rel="noopener"><span>Cxo</span></a></p><i class="fa fa-user"> </i><span id="busuanzi_value_site_uv"></span><span> | </span><i class="fa fa-eye"> </i><span id="busuanzi_value_site_pv"></span></div></footer><!-- catelog--><!-- top--><i class="fa fa-arrow-up close" id="go-up" aria-hidden="true"></i></body></html>
+1234 ...</div><div class="read-more"><a class="more" href="/2020/07/15/0712%E7%BB%83%E4%B9%A0/#more">ReadMore</a></div><hr></div></section><nav class="cxo-page-nav"><a class="extend prev" rel="prev" href="/">&amp;#60; PREV</a><a class="page-number" href="/">1</a><span class="page-number current">2</span><a class="page-number" href="/page/3/">3</a><a class="extend next" rel="next" href="/page/3/">NEXT &amp;#62;</a></nav></section></article><footer id="cxo-footer-outer"><div id="cxo-footer-inner"><p class="footer-container"><span>Site by </span><a href="http://hexo.io" target="_blank" rel="noopener"><span>Hexo</span></a><span> | theme </span><a href="https://github.com/Longlongyu/hexo-theme-Cxo" target="_blank" rel="noopener"><span>Cxo</span></a></p><i class="fa fa-user"> </i><span id="busuanzi_value_site_uv"></span><span> | </span><i class="fa fa-eye"> </i><span id="busuanzi_value_site_pv"></span></div></footer><!-- catelog--><!-- top--><i class="fa fa-arrow-up close" id="go-up" aria-hidden="true"></i></body></html>
