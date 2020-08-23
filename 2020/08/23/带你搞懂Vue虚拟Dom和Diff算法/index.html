@@ -1,0 +1,190 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"><meta name="author" content="GracefulTing"><meta name="renderer" content="webkit"><meta name="copyright" content="GracefulTing"><meta name="keywords" content="Welcome to GracefulTing's blog"><meta name="description" content=""><meta name="Cache-Control" content="no-cache"><meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"><title>带你搞懂Vue虚拟Dom和Diff算法 · GracefulTing's Blog</title><link rel="stylesheet" href="/css/style.css?v=2018.7.9"><link rel="stylesheet" href="/css/animation.css?v=2018.7.9"><link rel="icon" href="/img/assets/favicon.ico"><link rel="stylesheet" href="https://cdn.bootcss.com/font-awesome/4.7.0/css/font-awesome.min.css?version=1.5.6"><!-- scripts--><script>(function( w ){
+  "use strict";
+  // rel=preload support test
+  if( !w.loadCSS ){
+    w.loadCSS = function(){};
+  }
+  // define on the loadCSS obj
+  var rp = loadCSS.relpreload = {};
+  // rel=preload feature support test
+  // runs once and returns a function for compat purposes
+  rp.support = (function(){
+    var ret;
+    try {
+      ret = w.document.createElement( "link" ).relList.supports( "preload" );
+    } catch (e) {
+      ret = false;
+    }
+    return function(){
+      return ret;
+    };
+  })();
+
+  // if preload isn't supported, get an asynchronous load by using a non-matching media attribute
+  // then change that media back to its intended value on load
+  rp.bindMediaToggle = function( link ){
+    // remember existing media attr for ultimate state, or default to 'all'
+    var finalMedia = link.media || "all";
+
+    function enableStylesheet(){
+      link.media = finalMedia;
+    }
+
+    // bind load handlers to enable media
+    if( link.addEventListener ){
+      link.addEventListener( "load", enableStylesheet );
+    } else if( link.attachEvent ){
+      link.attachEvent( "onload", enableStylesheet );
+    }
+
+    // Set rel and non-applicable media type to start an async request
+    // note: timeout allows this to happen async to let rendering continue in IE
+    setTimeout(function(){
+      link.rel = "stylesheet";
+      link.media = "only x";
+    });
+    // also enable media after 3 seconds,
+    // which will catch very old browsers (android 2.x, old firefox) that don't support onload on link
+    setTimeout( enableStylesheet, 3000 );
+  };
+
+  // loop through link elements in DOM
+  rp.poly = function(){
+    // double check this to prevent external calls from running
+    if( rp.support() ){
+      return;
+    }
+    var links = w.document.getElementsByTagName( "link" );
+    for( var i = 0; i < links.length; i++ ){
+      var link = links[ i ];
+      // qualify links to those with rel=preload and as=style attrs
+      if( link.rel === "preload" && link.getAttribute( "as" ) === "style" && !link.getAttribute( "data-loadcss" ) ){
+        // prevent rerunning on link
+        link.setAttribute( "data-loadcss", true );
+        // bind listeners to toggle media back
+        rp.bindMediaToggle( link );
+      }
+    }
+  };
+
+  // if unsupported, run the polyfill
+  if( !rp.support() ){
+    // run once at least
+    rp.poly();
+
+    // rerun poly on an interval until onload
+    var run = w.setInterval( rp.poly, 500 );
+    if( w.addEventListener ){
+      w.addEventListener( "load", function(){
+        rp.poly();
+        w.clearInterval( run );
+      } );
+    } else if( w.attachEvent ){
+      w.attachEvent( "onload", function(){
+        rp.poly();
+        w.clearInterval( run );
+      } );
+    }
+  }
+
+
+  // commonjs
+  if( typeof exports !== "undefined" ){
+    exports.loadCSS = loadCSS;
+  }
+  else {
+    w.loadCSS = loadCSS;
+  }
+}( typeof global !== "undefined" ? global : this ) );</script><script src="https://cdn.jsdelivr.net/npm/jquery@3.3.1/dist/jquery.min.js" defer></script><script src="/js/main.js?v=2018.7.9" defer></script><!-- fancybox--><link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.2.5/jquery.fancybox.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'"><script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.2.5/jquery.fancybox.min.js" defer></script><!-- busuanzi--><script async src="//dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script><meta name="generator" content="Hexo 4.2.1"></head><body><section class="profile-close" id="cxo-profile"><div class="profile-avatar"><i class="fa fa-caret-left"></i><img src="/img/assets/cat.png"></div><!--.profile-saying
+  i.fa.fa-comment
+  .saying--><div class="cxo-profile-inner"><div class="profile-name">Grace</div><div class="profile-signature">The harder, the more fortunate</div><div class="read-progress"></div></div></section><header id="cxo-intro" style="height: 70vh;background-image: url(/img/intro/index-bg.png);"><nav id="cxo-intro-nav"><section><div class="intro-nav-title"><a href="/">GracefulTing's Blog</a></div><div class="intro-nav-label-box"><a href="/">Home</a><a href="/about/">About</a><a href="/archives/">Archives</a><a href="/tags/">Tags</a></div><i class="fa fa-bars intro-nav-menu"><div class="intro-nav-drop"><a href="/">Home</a><a href="/about/">About</a><a href="/archives/">Archives</a><a href="/tags/">Tags</a></div></i><div class="clear"></div></section></nav><h1 class="post-title">带你搞懂Vue虚拟Dom和Diff算法</h1><div class="post-intros"><div class="post-intro-meta"><span class="post-intro-time"><i class="post-intro-calendar fa fa-calendar"></i><span>2020-08-23</span></span></div></div></header><article class="cxo-up" id="cxo-content-outer"><section id="cxo-content-inner"><article class="article-entry" id="post"><h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>使用过Vue和React的小伙伴肯定对虚拟Dom和diff算法很熟悉，它扮演着很重要的角色。由于小编接触Vue比较多，React只是浅学，所以本篇主要针对Vue来展开介绍，带你一步一步搞懂它。</p>
+<h2 id="虚拟DOM"><a href="#虚拟DOM" class="headerlink" title="虚拟DOM"></a>虚拟DOM</h2><h3 id="什么是虚拟DOM？"><a href="#什么是虚拟DOM？" class="headerlink" title="什么是虚拟DOM？"></a>什么是虚拟DOM？</h3><p>虚拟DOM（Virtual   Dom），也就是我们常说的虚拟节点，是用JS对象来模拟真实DOM中的节点，该对象包含了真实DOM的结构及其属性，用于对比虚拟DOM和真实DOM的差异，从而进行局部渲染来达到优化性能的目的。</p>
+<p>真实的元素节点：</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">div</span> <span class="attr">id</span>=<span class="string">"wrap"</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">p</span> <span class="attr">class</span>=<span class="string">"title"</span>&gt;</span>Hello world!<span class="tag">&lt;/<span class="name">p</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">div</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>VNode：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    tag:<span class="string">'div'</span>,</span><br><span class="line">    attrs:&#123;</span><br><span class="line">        id:<span class="string">'wrap'</span></span><br><span class="line">    &#125;,</span><br><span class="line">    children:[</span><br><span class="line">        &#123;</span><br><span class="line">            tag:<span class="string">'p'</span>,</span><br><span class="line">            text:<span class="string">'Hello world!'</span>,</span><br><span class="line">            attrs:&#123;</span><br><span class="line">                class:'title',</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    ]</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="为什么使用虚拟DOM？"><a href="#为什么使用虚拟DOM？" class="headerlink" title="为什么使用虚拟DOM？"></a>为什么使用虚拟DOM？</h3><p>简单了解虚拟DOM后，是不是有小伙伴会问：Vue和React框架中为什么会用到它呢？好问题！那来解决下小伙伴的疑问。</p>
+<p>起初我们在使用JS/JQuery时，不可避免的会大量操作DOM，而DOM的变化又会引发回流或重绘，从而降低页面渲染性能。那么怎样来减少对DOM的操作呢？此时虚拟DOM应用而生，所以虚拟DOM出现的主要目的就是为了<strong>减少频繁操作DOM而引起回流重绘所引发的性能问题的</strong>！</p>
+<h3 id="虚拟DOM的作用是什么？"><a href="#虚拟DOM的作用是什么？" class="headerlink" title="虚拟DOM的作用是什么？"></a>虚拟DOM的作用是什么？</h3><ol>
+<li>兼容性好。因为Vnode本质是JS对象，所以不管Node还是浏览器环境，都可以操作；</li>
+<li>减少了对Dom的操作。页面中的数据和状态变化，都通过Vnode对比，只需要在比对完之后更新DOM，不需要频繁操作，提高了页面性能；</li>
+</ol>
+<h3 id="虚拟DOM和真实DOM的区别？"><a href="#虚拟DOM和真实DOM的区别？" class="headerlink" title="虚拟DOM和真实DOM的区别？"></a>虚拟DOM和真实DOM的区别？</h3><p>说到这里，那么虚拟DOM和真实DOM的区别是什么呢？总结大概如下：</p>
+<ul>
+<li>虚拟DOM不会进行回流和重绘；</li>
+<li>真实DOM在频繁操作时引发的回流重绘导致性能很低；</li>
+<li>虚拟DOM频繁修改，然后一次性对比差异并修改真实DOM，最后进行依次回流重绘，减少了真实DOM中多次回流重绘引起的性能损耗；</li>
+<li>虚拟DOM有效降低大面积的重绘与排版，因为是和真实DOM对比，更新差异部分，所以只渲染局部；</li>
+</ul>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">总损耗 = 真实DOM增删改 + (多节点)回流/重绘;    <span class="comment">//计算使用真实DOM的损耗</span></span><br><span class="line">总损耗 = 虚拟DOM增删改 + (diff对比)真实DOM差异化增删改 + (较少节点)回流/重绘;   <span class="comment">//计算使用虚拟DOM的损耗</span></span><br></pre></td></tr></table></figure>
+
+<p>可以发现，都是围绕频繁操作真实DOM引起回流重绘，导致页面性能损耗来说的。不过框架也不一定非要使用虚拟DOM，关键在于看是否频繁操作会引起大面积的DOM操作。</p>
+<p>那么虚拟DOM究竟通过什么方式来减少了页面中频繁操作DOM呢？这就不得不去了解DOM Diff算法了。</p>
+<h2 id="DIFF算法"><a href="#DIFF算法" class="headerlink" title="DIFF算法"></a>DIFF算法</h2><p>当数据变化时，vue如何来更新视图的？其实很简单，一开始会根据真实DOM生成虚拟DOM，当虚拟DOM某个节点的数据改变后会生成一个新的Vnode，然后VNode和oldVnode对比，把不同的地方修改在真实DOM上，最后再使得oldVnode的值为Vnode。</p>
+<blockquote>
+<p>diff过程就是调用patch函数，比较新老节点，一边比较一边给真实DOM打补丁(patch)；</p>
+</blockquote>
+<p>对照vue源码来解析一下，贴出核心代码，旨在简单明了讲述清楚，不然小编自己看着都头大了O(∩_∩)O</p>
+<h3 id="patch"><a href="#patch" class="headerlink" title="patch"></a>patch</h3><p>那么patch是怎样打补丁的？</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//patch函数  oldVnode:老节点   vnode:新节点</span></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">patch</span> (<span class="params">oldVnode, vnode</span>) </span>&#123;</span><br><span class="line">    ...</span><br><span class="line">    <span class="keyword">if</span> (sameVnode(oldVnode, vnode)) &#123;</span><br><span class="line">        patchVnode(oldVnode, vnode)    <span class="comment">//如果新老节点是同一节点,那么进一步通过patchVnode来比较子节点</span></span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="comment">/* -----否则新节点直接替换老节点----- */</span></span><br><span class="line">        <span class="keyword">const</span> oEl = oldVnode.el <span class="comment">// 当前oldVnode对应的真实元素节点</span></span><br><span class="line">        <span class="keyword">let</span> parentEle = api.parentNode(oEl)  <span class="comment">// 父元素</span></span><br><span class="line">        createEle(vnode)  <span class="comment">// 根据Vnode生成新元素</span></span><br><span class="line">        <span class="keyword">if</span> (parentEle !== <span class="literal">null</span>) &#123;</span><br><span class="line">            api.insertBefore(parentEle, vnode.el, api.nextSibling(oEl)) <span class="comment">// 将新元素添加进父元素</span></span><br><span class="line">            api.removeChild(parentEle, oldVnode.el)  <span class="comment">// 移除以前的旧元素节点</span></span><br><span class="line">            oldVnode = <span class="literal">null</span></span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    ...</span><br><span class="line">    <span class="keyword">return</span> vnode</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//判断两节点是否为同一节点</span></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">sameVnode</span> (<span class="params">a, b</span>) </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> (</span><br><span class="line">	    a.key === b.key &amp;&amp;  <span class="comment">// key值</span></span><br><span class="line">	    a.tag === b.tag &amp;&amp;  <span class="comment">// 标签名</span></span><br><span class="line">	    a.isComment === b.isComment &amp;&amp;  <span class="comment">// 是否为注释节点</span></span><br><span class="line">	    <span class="comment">// 是否都定义了data，data包含一些具体信息，例如onclick , style</span></span><br><span class="line">	    isDef(a.data) === isDef(b.data) &amp;&amp;  </span><br><span class="line">	    sameInputType(a, b) <span class="comment">// 当标签是&lt;input&gt;的时候，type必须相同</span></span><br><span class="line">    )</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>从上面可以看出，patch函数是通过判断新老节点是否为同一节点：</p>
+<ul>
+<li><p>如果是同一节点，执行patchVnode进行子节点比较；</p>
+</li>
+<li><p>如果不是同一节点，新节点直接替换老节点；</p>
+</li>
+</ul>
+<p>那如果不是同一节点，但是它们子节点一样怎么办嘞？OMG，要牢记：<strong>diff是同层比较，不存在跨级比较的</strong>！简单提一嘴，React中也是如此，它们只是针对同一层的节点进行比较。</p>
+<h3 id="patchVnode"><a href="#patchVnode" class="headerlink" title="patchVnode"></a>patchVnode</h3><p>既然到了patchVnode方法，说明新老节点为同一节点，那么这个方法做了什么处理？</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">patchVnode</span> (<span class="params">oldVnode, vnode</span>) </span>&#123;</span><br><span class="line">    <span class="keyword">const</span> el = vnode.el = oldVnode.el           <span class="comment">//找到对应的真实DOM</span></span><br><span class="line">    <span class="keyword">let</span> i, oldCh = oldVnode.children, ch = vnode.children     </span><br><span class="line">    <span class="keyword">if</span> (oldVnode === vnode) <span class="keyword">return</span>         <span class="comment">//如果新老节点相同,直接返回</span></span><br><span class="line">    <span class="keyword">if</span> (oldVnode.text !== <span class="literal">null</span> &amp;&amp; vnode.text !== <span class="literal">null</span> &amp;&amp; oldVnode.text !== vnode.text) &#123;</span><br><span class="line">        <span class="comment">//如果新老节点都有文本节点且不相等,那么新节点的文本节点替换老节点的文本节点</span></span><br><span class="line">        api.setTextContent(el, vnode.text)  </span><br><span class="line">    &#125;<span class="keyword">else</span> &#123;</span><br><span class="line">        updateEle(el, vnode, oldVnode)</span><br><span class="line">        <span class="keyword">if</span> (oldCh &amp;&amp; ch &amp;&amp; oldCh !== ch) &#123;</span><br><span class="line">            <span class="comment">//如果新老节点都有子节点,执行updateChildren比较子节点[很重要也很复杂,下面展开介绍]</span></span><br><span class="line">            updateChildren(el, oldCh, ch)</span><br><span class="line">        &#125;<span class="keyword">else</span> <span class="keyword">if</span> (ch)&#123;</span><br><span class="line">            <span class="comment">//如果新节点有子节点而老节点没有子节点,那么将新节点的子节点添加到老节点上</span></span><br><span class="line">            createEle(vnode)</span><br><span class="line">        &#125;<span class="keyword">else</span> <span class="keyword">if</span> (oldCh)&#123;</span><br><span class="line">            <span class="comment">//如果新节点没有子节点而老节点有子节点，那么删除老节点的子节点</span></span><br><span class="line">            api.removeChildren(el)</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>如果两个节点不一样，直接用新节点替换老节点；</p>
+<p>如果两个节点一样，</p>
+<ul>
+<li>​    新老节点一样，直接返回；</li>
+<li>​    老节点有子节点，新节点没有：删除老节点的子节点；</li>
+<li>​    老节点没有子节点，新节点有子节点：新节点的子节点直接append到老节点；</li>
+<li>​    都只有文本节点：直接用新节点的文本节点替换老的文本节点；</li>
+<li>​    都有子节点：updateChildren</li>
+</ul>
+<p>最复杂的情况也就是新老节点都有子节点，那么updateChildren是如何来处理这一问题的，该方法也是diff算法的核心，下面我们来了解一下！</p>
+<h3 id="updateChildren"><a href="#updateChildren" class="headerlink" title="updateChildren"></a>updateChildren</h3><p>由于代码太多了，这里先做个概述。updateChildren方法的核心：</p>
+<ol>
+<li>提取出新老节点的子节点：新节点子节点ch和老节点子节点oldCh；</li>
+<li>ch和oldCh分别设置StartIdx（指向头）和EndIdx（指向尾）变量，它们两两比较（按照sameNode方法），有四种方式来比较。如果4种方式都没有匹配成功，如果设置了key就通过key进行比较，在比较过程种startIdx++，endIdx–，一旦StartIdx &gt; EndIdx表明ch或者oldCh至少有一个已经遍历完成，此时就会结束比较。</li>
+</ol>
+<p>下面结合图来理解：</p>
+<p><img src="/img/blog/vue/2.png" alt="d775385bfe7eff6d3d7fffae7193fde"></p>
+<p>第一步：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">oldStartIdx = A , oldEndIdx = C;</span><br><span class="line">newStartIdx = A , newEndIdx = D;</span><br></pre></td></tr></table></figure>
+
+<p>此时oldStartIdx和newStarIdx匹配，所以将dom中的A节点放到第一个位置，此时A已经在第一个位置，所以不做处理，此时真实DOM顺序：A  B  C；</p>
+<p>第二步：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">oldStartIdx = B , oldEndIdx = C;</span><br><span class="line">newStartIdx = C , oldEndIdx = D;</span><br></pre></td></tr></table></figure>
+
+<p><img src="/img/blog/vue/3.png" alt="d775385bfe7eff6d3d7fffae7193fde"></p>
+<p>此时oldEndIdx和newStartIdx匹配，将原本的C节点移动到A后面，此时真实DOM顺序：A   C   B；</p>
+<p>第三步：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">oldStartIdx = C , oldEndIdx = C;</span><br><span class="line">newStartIdx = B , newEndIdx = D;</span><br><span class="line">oldStartIdx++,oldEndIdx--;</span><br><span class="line">oldStartIdx &gt; oldEndIdx</span><br></pre></td></tr></table></figure>
+
+<p>此时遍历结束，oldCh已经遍历完，那么将剩余的ch节点根据自己的index插入到真实DOM中即可，此时真实DOM顺序：A  C  B  D；</p>
+<p>所以匹配过程中判断结束有两个条件：</p>
+<ul>
+<li>oldStartIdx &gt; oldEndIdx表示oldCh先遍历完成，如果ch有剩余节点就根据对应index添加到真实DOM中；</li>
+<li>newStartIdx &gt; newEndIdx表示ch先遍历完成，那么就要在真实DOM中将多余节点删除掉；</li>
+</ul>
+<p>看下图这个实例，就是新节点先遍历完成删除多余节点：</p>
+<p><img src="/img/blog/vue/4.png" alt="adcccbbeeae994d064f2e2865b3551d"></p>
+<p>最后，在这些子节点sameVnode后如果满足条件继续执行patchVnode，层层递归，直到oldVnode和Vnode中所有子节点都比对完成，也就把所有的补丁都打好了，此时更新到视图。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>最后，用一张图来记忆整个Diff过程，希望你能有所收获！</p>
+<p><img src="/img/blog/vue/5.png" alt="612887fd6dc9751e39e37819dc3a753"></p>
+<h2 id="彩蛋"><a href="#彩蛋" class="headerlink" title="彩蛋"></a>彩蛋</h2><p>因为React只是简单学了基础，这里作为对比来概述一下：</p>
+<p>1.React渲染机制：react采用虚拟DOM，在每次属性和状态发生变化时，render函数会返回不同的元素树，然后对比返回的元素树和上次渲染树的差异并对差异部分进行更新，最后渲染为真实DOM。</p>
+<p>2.diff永远都是同层比较，如果节点类型不同，直接用新的替换旧的。如果节点类型相同，就比较他们的子节点，依次类推。通常元素上绑定的key值就是用来比较节点的，所以一定要保证其唯一性，一般不采用数组下标来作为key值，因为当数组元素发生变化时index会有所改动。</p>
+<p>3.Reconciliation过程的核心就是进行新旧DOM树的diff对比，利用shouldComponentUpdate中逻辑处理返回的true和false来判断是否需要更新，从而优化了性能。</p>
+<p>4.memo也就是基于shouldComponentUpdate实现了新老状态和属性的浅比较。</p>
+<p>渲染机制的整个过程包含了更新操作，将虚拟DOM转换为真实DOM，所以整个渲染过程就是Reconciliation。而这个过程的核心又主要是diff算法，利用的是生命周期shouldComponentUpdate函数。</p>
+</article><!-- lincense--><div class="post-paginator"><a class="nextSlogan" href="/2020/08/22/%E5%86%85%E7%BD%AEnew%E5%92%8CObject.create%E7%9A%84%E5%AE%9E%E7%8E%B0/" title="内置new和Object.create的实现"><span>NextPost ></span><br><span class="nextTitle">内置new和Object.create的实现</span></a><div class="clear"></div></div><div id="comment"></div></section></article><footer id="cxo-footer-outer"><div id="cxo-footer-inner"><p class="footer-container"><span>Site by </span><a href="http://hexo.io" target="_blank" rel="noopener"><span>Hexo</span></a><span> | theme </span><a href="https://github.com/Longlongyu/hexo-theme-Cxo" target="_blank" rel="noopener"><span>Cxo</span></a></p><i class="fa fa-user"> </i><span id="busuanzi_value_site_uv"></span><span> | </span><i class="fa fa-eye"> </i><span id="busuanzi_value_site_pv"></span></div></footer><!-- catelog--><div class="toc-wrapper" style="top: 70vh;"><div class="toc-catalog"><i class="fa fa-list"> </i><span>CATALOG</span></div><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#前言"><span class="toc-number">1.</span> <span class="toc-text">前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#虚拟DOM"><span class="toc-number">2.</span> <span class="toc-text">虚拟DOM</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#什么是虚拟DOM？"><span class="toc-number">2.1.</span> <span class="toc-text">什么是虚拟DOM？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#为什么使用虚拟DOM？"><span class="toc-number">2.2.</span> <span class="toc-text">为什么使用虚拟DOM？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#虚拟DOM的作用是什么？"><span class="toc-number">2.3.</span> <span class="toc-text">虚拟DOM的作用是什么？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#虚拟DOM和真实DOM的区别？"><span class="toc-number">2.4.</span> <span class="toc-text">虚拟DOM和真实DOM的区别？</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#DIFF算法"><span class="toc-number">3.</span> <span class="toc-text">DIFF算法</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#patch"><span class="toc-number">3.1.</span> <span class="toc-text">patch</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#patchVnode"><span class="toc-number">3.2.</span> <span class="toc-text">patchVnode</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#updateChildren"><span class="toc-number">3.3.</span> <span class="toc-text">updateChildren</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#总结"><span class="toc-number">4.</span> <span class="toc-text">总结</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#彩蛋"><span class="toc-number">5.</span> <span class="toc-text">彩蛋</span></a></li></ol></div><!-- top--><i class="fa fa-arrow-up close" id="go-up" aria-hidden="true"></i></body></html>

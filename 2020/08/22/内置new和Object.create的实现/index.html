@@ -1,0 +1,164 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"><meta name="author" content="GracefulTing"><meta name="renderer" content="webkit"><meta name="copyright" content="GracefulTing"><meta name="keywords" content="Welcome to GracefulTing's blog"><meta name="description" content=""><meta name="Cache-Control" content="no-cache"><meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"><title>内置new和Object.create的实现 · GracefulTing's Blog</title><link rel="stylesheet" href="/css/style.css?v=2018.7.9"><link rel="stylesheet" href="/css/animation.css?v=2018.7.9"><link rel="icon" href="/img/assets/favicon.ico"><link rel="stylesheet" href="https://cdn.bootcss.com/font-awesome/4.7.0/css/font-awesome.min.css?version=1.5.6"><!-- scripts--><script>(function( w ){
+  "use strict";
+  // rel=preload support test
+  if( !w.loadCSS ){
+    w.loadCSS = function(){};
+  }
+  // define on the loadCSS obj
+  var rp = loadCSS.relpreload = {};
+  // rel=preload feature support test
+  // runs once and returns a function for compat purposes
+  rp.support = (function(){
+    var ret;
+    try {
+      ret = w.document.createElement( "link" ).relList.supports( "preload" );
+    } catch (e) {
+      ret = false;
+    }
+    return function(){
+      return ret;
+    };
+  })();
+
+  // if preload isn't supported, get an asynchronous load by using a non-matching media attribute
+  // then change that media back to its intended value on load
+  rp.bindMediaToggle = function( link ){
+    // remember existing media attr for ultimate state, or default to 'all'
+    var finalMedia = link.media || "all";
+
+    function enableStylesheet(){
+      link.media = finalMedia;
+    }
+
+    // bind load handlers to enable media
+    if( link.addEventListener ){
+      link.addEventListener( "load", enableStylesheet );
+    } else if( link.attachEvent ){
+      link.attachEvent( "onload", enableStylesheet );
+    }
+
+    // Set rel and non-applicable media type to start an async request
+    // note: timeout allows this to happen async to let rendering continue in IE
+    setTimeout(function(){
+      link.rel = "stylesheet";
+      link.media = "only x";
+    });
+    // also enable media after 3 seconds,
+    // which will catch very old browsers (android 2.x, old firefox) that don't support onload on link
+    setTimeout( enableStylesheet, 3000 );
+  };
+
+  // loop through link elements in DOM
+  rp.poly = function(){
+    // double check this to prevent external calls from running
+    if( rp.support() ){
+      return;
+    }
+    var links = w.document.getElementsByTagName( "link" );
+    for( var i = 0; i < links.length; i++ ){
+      var link = links[ i ];
+      // qualify links to those with rel=preload and as=style attrs
+      if( link.rel === "preload" && link.getAttribute( "as" ) === "style" && !link.getAttribute( "data-loadcss" ) ){
+        // prevent rerunning on link
+        link.setAttribute( "data-loadcss", true );
+        // bind listeners to toggle media back
+        rp.bindMediaToggle( link );
+      }
+    }
+  };
+
+  // if unsupported, run the polyfill
+  if( !rp.support() ){
+    // run once at least
+    rp.poly();
+
+    // rerun poly on an interval until onload
+    var run = w.setInterval( rp.poly, 500 );
+    if( w.addEventListener ){
+      w.addEventListener( "load", function(){
+        rp.poly();
+        w.clearInterval( run );
+      } );
+    } else if( w.attachEvent ){
+      w.attachEvent( "onload", function(){
+        rp.poly();
+        w.clearInterval( run );
+      } );
+    }
+  }
+
+
+  // commonjs
+  if( typeof exports !== "undefined" ){
+    exports.loadCSS = loadCSS;
+  }
+  else {
+    w.loadCSS = loadCSS;
+  }
+}( typeof global !== "undefined" ? global : this ) );</script><script src="https://cdn.jsdelivr.net/npm/jquery@3.3.1/dist/jquery.min.js" defer></script><script src="/js/main.js?v=2018.7.9" defer></script><!-- fancybox--><link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.2.5/jquery.fancybox.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'"><script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.2.5/jquery.fancybox.min.js" defer></script><!-- busuanzi--><script async src="//dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script><meta name="generator" content="Hexo 4.2.1"></head><body><section class="profile-close" id="cxo-profile"><div class="profile-avatar"><i class="fa fa-caret-left"></i><img src="/img/assets/cat.png"></div><!--.profile-saying
+  i.fa.fa-comment
+  .saying--><div class="cxo-profile-inner"><div class="profile-name">Grace</div><div class="profile-signature">The harder, the more fortunate</div><div class="read-progress"></div></div></section><header id="cxo-intro" style="height: 70vh;background-image: url(/img/intro/index-bg.png);"><nav id="cxo-intro-nav"><section><div class="intro-nav-title"><a href="/">GracefulTing's Blog</a></div><div class="intro-nav-label-box"><a href="/">Home</a><a href="/about/">About</a><a href="/archives/">Archives</a><a href="/tags/">Tags</a></div><i class="fa fa-bars intro-nav-menu"><div class="intro-nav-drop"><a href="/">Home</a><a href="/about/">About</a><a href="/archives/">Archives</a><a href="/tags/">Tags</a></div></i><div class="clear"></div></section></nav><h1 class="post-title">内置new和Object.create的实现</h1><div class="post-intros"><div class="post-intro-meta"><span class="post-intro-time"><i class="post-intro-calendar fa fa-calendar"></i><span>2020-08-22</span></span></div></div></header><article class="cxo-up" id="cxo-content-outer"><section id="cxo-content-inner"><article class="article-entry" id="post"><p>JS中常见的创建对象的方式主要就是new和Object.create两种了，今天小编系统来整理一下。</p>
+<h2 id="new"><a href="#new" class="headerlink" title="new"></a>new</h2><p>语法：new  constructor（[arguments]）</p>
+<p>使用：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> obj = <span class="keyword">new</span> <span class="built_in">Object</span>();</span><br></pre></td></tr></table></figure>
+
+<p>根据上面的语法，我们可以看出new实例化对象是通过构造函数实现的。那么new的时候都做了哪些操作？分析如下：</p>
+<ol>
+<li>创建类（例如：Car）的实例对象（redCar）【实例.__ proto __ = 类.prototype】；</li>
+<li>把类（Car）当作普通函数执行，并且让方法中的this指向创建的实例；</li>
+<li>分析函数执行的返回值，如果没有返回值或者返回的是原始值类型，最后返回的都是创建的实例，否则以函数自身返回的为主；</li>
+</ol>
+<p>Emm，光看上面的描述可能还是不太清楚。那好办吖，动手去实现一个内置new就明白了！</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment"> * 实现内置new------按照上面的流程依次来做</span></span><br><span class="line"><span class="comment"> * @params</span></span><br><span class="line"><span class="comment"> *   fn:要操作的类，也就是要创建这个类的实例</span></span><br><span class="line"><span class="comment"> *   args:要传递给类fn的参数</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">myNew</span>(<span class="params">fn,...args</span>)</span>&#123;</span><br><span class="line">    <span class="comment">//1.创建类fn的实例对象[满足:实例.__proto__ = 类.prototype]</span></span><br><span class="line">    <span class="keyword">let</span> obj = &#123;&#125;;</span><br><span class="line">    obj.__proto__ = fn.prototype;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">//2.把类fn当作普通函数执行，并改变this指向为=&gt;创建的实例对象</span></span><br><span class="line">    <span class="keyword">let</span> result = fn.call(obj,...args);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">//3.分析返回值【无返回值或者返回值是原始值类型=&gt;创建的实例,否则=&gt;以函数返回的为主】</span></span><br><span class="line">    <span class="keyword">if</span>(result !== <span class="literal">null</span> &amp;&amp; <span class="regexp">/^(object|function)$/</span>.test(<span class="keyword">typeof</span> result))&#123;</span><br><span class="line">        <span class="keyword">return</span> result;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> obj;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>那么上面的方法存在什么问题吗？或者说有哪些地方可以再进一步优化呢？</p>
+<p>因为在IE浏览器中，是禁止我们使用__ proto__的，主要目的是防止我们改变原型指向从而导致原型错乱，也可以理解为IE浏览器并没有提供 proto属性。因此我们可以针对这点对以上代码的步骤1做个优化处理。</p>
+<p>优化方案：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">myNew</span>(<span class="params">fn,...args</span>)</span>&#123;</span><br><span class="line">    <span class="comment">//1.创建类fn的实例对象[满足:实例.__proto__ = 类.prototype]</span></span><br><span class="line">    <span class="keyword">let</span> obj = <span class="built_in">Object</span>.create(fn.prototype);</span><br><span class="line">    <span class="comment">//2.把类fn当作普通函数执行，并改变this指向为=&gt;创建的实例对象</span></span><br><span class="line">    <span class="keyword">let</span> result = fn.call(obj,...args);</span><br><span class="line">    <span class="comment">//3.分析返回值【无返回值或者返回值是原始值类型=&gt;创建的实例,否则=&gt;以函数返回的为主】</span></span><br><span class="line">    <span class="keyword">if</span>(result !== <span class="literal">null</span> &amp;&amp; <span class="regexp">/^(object|function)$/</span>.test(<span class="keyword">typeof</span> result))&#123;</span><br><span class="line">        <span class="keyword">return</span> result;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> obj;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>细心的童鞋就可以发现优化处理是用Object.create来创建类的实例对象的，那么关于Object.create，你又了解多少？</p>
+<h2 id="Object-create"><a href="#Object-create" class="headerlink" title="Object.create"></a>Object.create</h2><p>语法：Object.create([Object])</p>
+<p>该方法用来创建一个新对象，使用现有对象来提供新创建的对象的__ proto __ ，因此Object需要是一个<strong>对象</strong>，然后我们创建一个空对象emptyObj，并且把[Object]对象作为新空对象的原型链指向。即：emptyObj.__ proto__ = [Object]</p>
+<p>特殊：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">Object</span>.create(<span class="literal">null</span>):创建一个没有原型/原型链的空对象，不是任何类的实例;</span><br></pre></td></tr></table></figure>
+
+<p>但是呢，Object.create()兼容性不太好，那么想要通过这种方式来创建对象该怎么处理呢？话不多说，还是动手去实现一个内置Object.create方法吧！保你拿着它随便用，不用再考虑兼容性问题了！！</p>
+<p>由于Object.create可以处理null，其实算作是一个bug，因为typeof  null 的结果也是object，因此我们在实现的时候可以把这点考虑进去。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment"> * 实现内置Object.create</span></span><br><span class="line"><span class="comment"> * @params</span></span><br><span class="line"><span class="comment"> *   prototype:新创建对象的原型对象</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="built_in">Object</span>.create = <span class="function"><span class="keyword">function</span> <span class="title">create</span>(<span class="params">prototype</span>)</span>&#123;</span><br><span class="line">    <span class="comment">//1.对参数类型判断,保证是一个对象</span></span><br><span class="line">    <span class="keyword">if</span>(prototype == <span class="literal">null</span> || <span class="keyword">typeof</span> prototype != <span class="string">'object'</span>)&#123;</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> <span class="built_in">TypeError</span>(<span class="string">'Object prototype may only be an Object'</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//2.此处借助类来实现,创建一个类，让该类的prototype等于传递的原型对象，最后返回这个类的实例</span></span><br><span class="line">    <span class="function"><span class="keyword">function</span> <span class="title">Temp</span>(<span class="params"></span>)</span>&#123;&#125;</span><br><span class="line">    Temp.prototype = prototype;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">new</span> Temp();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>在这个过程中会不会有小伙伴想提个问题，上面的步骤2为什么不直接这么处理：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> obj = &#123;&#125;;</span><br><span class="line">obj.__proto__ = prototype;</span><br><span class="line"><span class="keyword">return</span> obj;</span><br></pre></td></tr></table></figure>
+
+<p>Emm，这样不就又绕回到我们最初的问题了吗？Object.create解决的就是不能使用__ proto __ 的问题，这么写被人掐死的吧，哈哈！所以，请保持清醒哟~~</p>
+<h2 id="关于new和Object-create的区别"><a href="#关于new和Object-create的区别" class="headerlink" title="关于new和Object.create的区别"></a>关于new和Object.create的区别</h2><p>下面我们通过一个实例来对比它们的区别：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">Car</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">	<span class="keyword">this</span>.color = <span class="string">'red'</span>;</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">let</span> carObj1 = <span class="keyword">new</span> Car();</span><br><span class="line"><span class="built_in">console</span>.log(carObj1);</span><br><span class="line"><span class="keyword">let</span> carObj2 = <span class="built_in">Object</span>.create(Car);</span><br><span class="line"><span class="built_in">console</span>.log(carObj2);</span><br></pre></td></tr></table></figure>
+
+<p>new：生成对象的__ proto__指向了构造函数的原型对象；</p>
+<p><img src="/img/blog/js/1.png" alt="314c82acb3de97251aa9ed6138dc334"></p>
+<p>Object.create：生成对象的__ proto __指向传入的参数Car；</p>
+<p><img src="/img/blog/js/2.png" alt="314c82acb3de97251aa9ed6138dc334"></p>
+<p>同时可以观察出new保留了原构造函数属性，而Object.create丢失构造函数属性。</p>
+<h2 id="Object-freeze"><a href="#Object-freeze" class="headerlink" title="Object.freeze"></a>Object.freeze</h2><p>概念：该方法用来<strong>冻结</strong>一个对象。一个被冻结的对象不能再被修改，不能再添加/删除属性，也不能修改该对象已有属性的可枚举性、可配置性、可写性，也不能修改已有属性的值，原型也不能被修改。所以该方法最后返回一个和传入参数相同的对象。</p>
+<p>语法：Object.freeze(obj)；</p>
+<p>使用场景：常量一般用const来定义，就不能被修改了；但是当值为引用类型时，还可以操作对象，扩展或者修改对象属性和方法，这个时候就需要用到Objec.freeze函数了。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> obj = &#123;</span><br><span class="line">    age:<span class="number">10</span>,</span><br><span class="line">    sex:<span class="string">'男'</span></span><br><span class="line">&#125;</span><br><span class="line">obj.age = <span class="number">18</span>;</span><br><span class="line"><span class="built_in">console</span>.log(obj.age);  <span class="comment">//18</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> freezeObj = <span class="built_in">Object</span>.freeze(obj);</span><br><span class="line"><span class="built_in">console</span>.log(obj === freezeObj);    <span class="comment">//true</span></span><br><span class="line">obj.age = <span class="number">20</span>;</span><br><span class="line"><span class="built_in">console</span>.log(obj.age,freezeObj.age);   <span class="comment">//18  18</span></span><br></pre></td></tr></table></figure>
+
+
+
+<p>那么如何来简单模拟一个freeze方法呢？先来定义一个对象：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> person = &#123;</span><br><span class="line">	name:<span class="string">'aa'</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>我们知道Object.defineProperty可以定义对象的属性特性，比如可不可以删除、可不可以修改等。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">Object</span>.defineProperty(person, <span class="string">'name'</span>, &#123;</span><br><span class="line">   configurable: <span class="literal">false</span>,    <span class="comment">// 表示能否通过delete删除属性，能否修改属性的特性...</span></span><br><span class="line">   enumerable: <span class="literal">false</span>,      <span class="comment">// 表示是否可以枚举。直接在对象上定义的属性，基本默认true</span></span><br><span class="line">   writable: <span class="literal">false</span>,        <span class="comment">// 表示能否修改属性的值。直接在对象上定义的属性，基本默认true</span></span><br><span class="line">   value: <span class="string">'张三'</span>           <span class="comment">// 表示属性的值。访问属性时从这里读取，修改属性时，也保存在这里。</span></span><br><span class="line">&#125;)</span><br></pre></td></tr></table></figure>
+
+<p><img src="/img/blog/js/3.png" alt="314c82acb3de97251aa9ed6138dc334"></p>
+<p>到这里，name属性就成了不能删除、不可枚举、不可修改属性值的属性了；</p>
+<p>如果不想让对象被扩展、删除属性，就要用到Object.seal()，该方法用来封闭一个对象，阻止其添加新属性并将现有属性标记为不可配置。最后结合这两个方法来实现一个freeze方法。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">myFreeze</span>(<span class="params">obj</span>)</span>&#123;</span><br><span class="line">    <span class="comment">//1.判断参数是否为Object类型，如果是就封闭对象，循环遍历对象。去掉原型属性，将其writable特性设置为false</span></span><br><span class="line">    <span class="keyword">if</span>(obj <span class="keyword">instanceof</span> <span class="built_in">Object</span>)&#123;</span><br><span class="line">        <span class="built_in">Object</span>.seal(obj);  <span class="comment">//封闭对象</span></span><br><span class="line">        <span class="keyword">for</span>(<span class="keyword">let</span> key <span class="keyword">in</span> obj)&#123;</span><br><span class="line">            <span class="keyword">if</span>(obj.hasOwnProperty(key))&#123;</span><br><span class="line">                <span class="built_in">Object</span>.defineProperty(obj,key,&#123;</span><br><span class="line">                    writable:<span class="literal">false</span>   <span class="comment">//设置只读</span></span><br><span class="line">                &#125;)</span><br><span class="line">                <span class="comment">//如果属性值依然为对象，要通过递归来进行进一步的冻结</span></span><br><span class="line">                myFreeze(obj[key]);  </span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>最后简单测试一下：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> person = &#123;</span><br><span class="line">      name: <span class="string">'tt'</span>,</span><br><span class="line">      childs:[<span class="string">'a'</span>,<span class="string">'b'</span>]</span><br><span class="line">&#125;</span><br><span class="line">myFreeze(person);</span><br><span class="line">person.age = <span class="number">30</span>;</span><br><span class="line"><span class="built_in">console</span>.log(person.age);   <span class="comment">//undefined</span></span><br><span class="line">person.childs[<span class="number">0</span>] = <span class="string">'cc'</span>;</span><br><span class="line"><span class="built_in">console</span>.log(person);   <span class="comment">//和之前一样</span></span><br></pre></td></tr></table></figure>
+
+<p>结果如下：</p>
+<p><img src="/img/blog/js/4.png" alt="314c82acb3de97251aa9ed6138dc334"></p>
+</article><!-- lincense--><div class="post-paginator"><a class="prevSlogan" href="/2020/08/23/%E5%B8%A6%E4%BD%A0%E6%90%9E%E6%87%82Vue%E8%99%9A%E6%8B%9FDom%E5%92%8CDiff%E7%AE%97%E6%B3%95/" title="带你搞懂Vue虚拟Dom和Diff算法"><span>< PreviousPost</span><br><span class="prevTitle">带你搞懂Vue虚拟Dom和Diff算法</span></a><a class="nextSlogan" href="/2020/08/09/axios%E5%B0%81%E8%A3%85/" title="axios封装"><span>NextPost ></span><br><span class="nextTitle">axios封装</span></a><div class="clear"></div></div><div id="comment"></div></section></article><footer id="cxo-footer-outer"><div id="cxo-footer-inner"><p class="footer-container"><span>Site by </span><a href="http://hexo.io" target="_blank" rel="noopener"><span>Hexo</span></a><span> | theme </span><a href="https://github.com/Longlongyu/hexo-theme-Cxo" target="_blank" rel="noopener"><span>Cxo</span></a></p><i class="fa fa-user"> </i><span id="busuanzi_value_site_uv"></span><span> | </span><i class="fa fa-eye"> </i><span id="busuanzi_value_site_pv"></span></div></footer><!-- catelog--><div class="toc-wrapper" style="top: 70vh;"><div class="toc-catalog"><i class="fa fa-list"> </i><span>CATALOG</span></div><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#new"><span class="toc-number">1.</span> <span class="toc-text">new</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Object-create"><span class="toc-number">2.</span> <span class="toc-text">Object.create</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#关于new和Object-create的区别"><span class="toc-number">3.</span> <span class="toc-text">关于new和Object.create的区别</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Object-freeze"><span class="toc-number">4.</span> <span class="toc-text">Object.freeze</span></a></li></ol></div><!-- top--><i class="fa fa-arrow-up close" id="go-up" aria-hidden="true"></i></body></html>
