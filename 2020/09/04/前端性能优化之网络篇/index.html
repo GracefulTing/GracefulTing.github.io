@@ -1,0 +1,253 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"><meta name="author" content="GracefulTing"><meta name="renderer" content="webkit"><meta name="copyright" content="GracefulTing"><meta name="keywords" content="Welcome to GracefulTing's blog"><meta name="description" content=""><meta name="Cache-Control" content="no-cache"><meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"><title>前端性能优化之网络篇 · GracefulTing's Blog</title><link rel="stylesheet" href="/css/style.css?v=2018.7.9"><link rel="stylesheet" href="/css/animation.css?v=2018.7.9"><link rel="icon" href="/img/assets/favicon.ico"><link rel="stylesheet" href="https://cdn.bootcss.com/font-awesome/4.7.0/css/font-awesome.min.css?version=1.5.6"><!-- scripts--><script>(function( w ){
+  "use strict";
+  // rel=preload support test
+  if( !w.loadCSS ){
+    w.loadCSS = function(){};
+  }
+  // define on the loadCSS obj
+  var rp = loadCSS.relpreload = {};
+  // rel=preload feature support test
+  // runs once and returns a function for compat purposes
+  rp.support = (function(){
+    var ret;
+    try {
+      ret = w.document.createElement( "link" ).relList.supports( "preload" );
+    } catch (e) {
+      ret = false;
+    }
+    return function(){
+      return ret;
+    };
+  })();
+
+  // if preload isn't supported, get an asynchronous load by using a non-matching media attribute
+  // then change that media back to its intended value on load
+  rp.bindMediaToggle = function( link ){
+    // remember existing media attr for ultimate state, or default to 'all'
+    var finalMedia = link.media || "all";
+
+    function enableStylesheet(){
+      link.media = finalMedia;
+    }
+
+    // bind load handlers to enable media
+    if( link.addEventListener ){
+      link.addEventListener( "load", enableStylesheet );
+    } else if( link.attachEvent ){
+      link.attachEvent( "onload", enableStylesheet );
+    }
+
+    // Set rel and non-applicable media type to start an async request
+    // note: timeout allows this to happen async to let rendering continue in IE
+    setTimeout(function(){
+      link.rel = "stylesheet";
+      link.media = "only x";
+    });
+    // also enable media after 3 seconds,
+    // which will catch very old browsers (android 2.x, old firefox) that don't support onload on link
+    setTimeout( enableStylesheet, 3000 );
+  };
+
+  // loop through link elements in DOM
+  rp.poly = function(){
+    // double check this to prevent external calls from running
+    if( rp.support() ){
+      return;
+    }
+    var links = w.document.getElementsByTagName( "link" );
+    for( var i = 0; i < links.length; i++ ){
+      var link = links[ i ];
+      // qualify links to those with rel=preload and as=style attrs
+      if( link.rel === "preload" && link.getAttribute( "as" ) === "style" && !link.getAttribute( "data-loadcss" ) ){
+        // prevent rerunning on link
+        link.setAttribute( "data-loadcss", true );
+        // bind listeners to toggle media back
+        rp.bindMediaToggle( link );
+      }
+    }
+  };
+
+  // if unsupported, run the polyfill
+  if( !rp.support() ){
+    // run once at least
+    rp.poly();
+
+    // rerun poly on an interval until onload
+    var run = w.setInterval( rp.poly, 500 );
+    if( w.addEventListener ){
+      w.addEventListener( "load", function(){
+        rp.poly();
+        w.clearInterval( run );
+      } );
+    } else if( w.attachEvent ){
+      w.attachEvent( "onload", function(){
+        rp.poly();
+        w.clearInterval( run );
+      } );
+    }
+  }
+
+
+  // commonjs
+  if( typeof exports !== "undefined" ){
+    exports.loadCSS = loadCSS;
+  }
+  else {
+    w.loadCSS = loadCSS;
+  }
+}( typeof global !== "undefined" ? global : this ) );</script><script src="https://cdn.jsdelivr.net/npm/jquery@3.3.1/dist/jquery.min.js" defer></script><script src="/js/main.js?v=2018.7.9" defer></script><!-- fancybox--><link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.2.5/jquery.fancybox.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'"><script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.2.5/jquery.fancybox.min.js" defer></script><!-- busuanzi--><script async src="//dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script><meta name="generator" content="Hexo 4.2.1"></head><body><section class="profile-close" id="cxo-profile"><div class="profile-avatar"><i class="fa fa-caret-left"></i><img src="/img/assets/cat.png"></div><!--.profile-saying
+  i.fa.fa-comment
+  .saying--><div class="cxo-profile-inner"><div class="profile-name">Grace</div><div class="profile-signature">The harder, the more fortunate</div><div class="read-progress"></div></div></section><header id="cxo-intro" style="height: 70vh;background-image: url(/img/intro/index-bg.png);"><nav id="cxo-intro-nav"><section><div class="intro-nav-title"><a href="/">GracefulTing's Blog</a></div><div class="intro-nav-label-box"><a href="/">Home</a><a href="/about/">About</a><a href="/archives/">Archives</a><a href="/tags/">Tags</a></div><i class="fa fa-bars intro-nav-menu"><div class="intro-nav-drop"><a href="/">Home</a><a href="/about/">About</a><a href="/archives/">Archives</a><a href="/tags/">Tags</a></div></i><div class="clear"></div></section></nav><h1 class="post-title">前端性能优化之网络篇</h1><div class="post-intros"><div class="post-intro-meta"><span class="post-intro-time"><i class="post-intro-calendar fa fa-calendar"></i><span>2020-09-04</span></span></div></div></header><article class="cxo-up" id="cxo-content-outer"><section id="cxo-content-inner"><article class="article-entry" id="post"><h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>“从输入URL到页面展示，中间都发生了什么?”这道题大家都不陌生，作为一道面试基本必考题，网上可以搜索到很多的资料和解答，总是看了忘，忘了看。趁着小编最近复习这部分内容，就从这道经典面试题入手，带大家把它背后的整个流程一探究竟。只有搞明白浏览器背后的渲染机制，才能明确从哪些方面进行性能优化！</p>
+<h2 id="从输入URL到页面展示，中间都发生了什么"><a href="#从输入URL到页面展示，中间都发生了什么" class="headerlink" title="从输入URL到页面展示，中间都发生了什么?"></a>从输入URL到页面展示，中间都发生了什么?</h2><h3 id="1-URL解析"><a href="#1-URL解析" class="headerlink" title="1.URL解析"></a>1.URL解析</h3><p>   什么是URL解析呢？当用户在地址栏输入地址后，是如何到达服务端呢？此时，浏览器需要对url进行解析、拆分，明确使用了什么协议，哪个端口，携带参数等信息，这也就是所谓的<strong>地址解析</strong>。在这个过程中，某些特殊情况需要对url做编码处理，也就是说对于一些特殊字符，我们在客户端和服务器端传递的时候，需要进行<strong>编码和解码</strong>。具体方式有以下3种：</p>
+<ul>
+<li><p><strong>encodeURI / decodeURI</strong> ——  主要对地址中的空格或中文汉字等进行编码；</p>
+</li>
+<li><p><strong>encodeURIComponent  / decodeURIComponent</strong> —— 在encodeURI基础上，对地址中的:后面/等也会进行编码</p>
+</li>
+<li><p><strong>escape / unescape</strong> —— 主要用于客户端不同页面之间数据传输的时候，信息的编码解码(eg：cookie)</p>
+<p>通过下面实例来对比区别：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> url = <span class="string">'http//www.baidu.com/index.html?from=http://www.baidu.com/&amp;aaa=1'</span>;</span><br><span class="line"></span><br><span class="line"><span class="built_in">console</span>.log(<span class="built_in">encodeURI</span>(url));  </span><br><span class="line"><span class="comment">//http//www.baidu.com/%E5%93%88%E5%93%88%E5%93%88index.html?from=http://www.baidu.com/&amp;aaa=1</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">console</span>.log(<span class="built_in">encodeURIComponent</span>(url));   <span class="comment">//http%2F%2Fwww.baidu.com%2F%E5%93%88%E5%93%88%E5%93%88index.html%3Ffrom%3Dhttp%3A%2F%2Fwww.baidu.com%2F%26aaa%3D1</span></span><br></pre></td></tr></table></figure>
+
+</li>
+</ul>
+<h3 id="2-缓存检查"><a href="#2-缓存检查" class="headerlink" title="2.缓存检查"></a>2.缓存检查</h3><p>   当打开网页时，并不会立即向服务器发送请求，而是先检查本地缓存是否有匹配的资源，如果有就直接使用本地缓存，没有的话则向服务器发送网络请求。</p>
+<p>   <strong>场景</strong></p>
+<ul>
+<li>打开网页：查找disk cache中是否有匹配，如果有就直接使用，没有的话发送网络请求；</li>
+<li>普通刷新(F5)：由于此时tab页签并没有关闭，因此memory cache可用，会被优先使用，其次才是disk cache；</li>
+<li>强制刷新(Ctrl+F5)：强制刷新时，<strong>浏览器不使用缓存</strong>，因此发送的请求头部都带有<strong>cache-control:no-cache</strong>，服务器直接返回200和最新的资源内容。</li>
+</ul>
+<p>   <strong>【知识引申：关于强缓存和协商缓存】</strong></p>
+<p>   <strong>缓存分类</strong></p>
+<p>   web缓存有很多，常见的有<strong>数据库缓存</strong>，<strong>代理服务器缓存</strong>以及<strong>cdn缓存</strong>等。浏览器缓存实际是把文件保存在客户端，这样在同一个会话过程中会检查缓存中的资源是否为最新，如果是最新的就拿出直接使用，从而减少了服务器请求数量。</p>
+<p>   <strong>缓存位置</strong></p>
+<p>   Memory Cache：内存缓存； Disk Cache：硬盘缓存；</p>
+<p>   <strong>强缓存</strong></p>
+<p>   <strong>特点</strong>：服务器设定了一些 <strong>*资源[静态资源 html/css/js/图片…] *</strong>的强缓存机制，<strong><em>在浏览器缓存的有效期内除了清缓存刷新</em></strong>，正常加载页面都是从缓存中获取数据，而不是从服务器重新获取。</p>
+<p>   如图：<img src="https://p1-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/9e2747fd1d054d3e927259adf28774b8~tplv-k3u1fbpfcp-zoom-1.image" alt=""></p>
+<p>   怎样来检查强缓存呢？需要用到相应的字段。</p>
+<blockquote>
+<p>在 <strong>HTTP1. 0</strong> 时期，使用的是<strong>Expires</strong>；</p>
+<p>在 <strong>HTTP1. 1</strong> 时期，使用的是<strong>Cache-Control</strong>；</p>
+</blockquote>
+<p>   Expires缓存过期时间，用来指定资源到期的时间；Cache-control和Expires不同的是没有过期时间点，而是采用过期时长<strong>max-age</strong>来控制缓存的，第一次拿到资源后设置为30天，再次发送请求时读取缓存中的信息；当两者同时存在时，Cache-Control优先级高于Expires。</p>
+<p>   <strong>优势</strong>：减少对服务器的请求，加载资源更快，页面渲染速度更快。</p>
+<p>   <strong>弊端</strong>：当我们的资源在服务器更新了，但是本地还有缓存的，这样导致客户端无法及时获取最新内容。</p>
+<p>   <strong>解决方案</strong>：</p>
+<ul>
+<li><p>HTML页面不做缓存，在每次发布资源时，只要内容有更新，资源文件名字都是不一样的【eg：webpack打包时给名字设置hash】，这样一来，只要资源文件有更改，页面每次请求的资源文件也就变了，客户端做过此新文件的缓存，还是从服务器获取。</p>
+</li>
+<li><p>哪怕文件名字不变，只要在请求资源文件的后面加一个<strong><em>时间戳</em></strong>也可以，这样也是重新获取而不是走缓存。</p>
+</li>
+<li><p>不做强缓存的设置，基于协商缓存实现。</p>
+</li>
+</ul>
+<p>   <strong>协商缓存</strong></p>
+<blockquote>
+<p>在 <strong>HTTP/1. 0</strong> 时期，使用的是<strong>Last-Modifed</strong>；</p>
+<p>在 <strong>HTTP/1. 1</strong> 时器，使用的是<strong>Etag</strong>；</p>
+</blockquote>
+<p>   协商缓存就是强制缓存失效后，浏览器携带缓存标识向服务器发送请求，由服务器根据缓存标识决定是否使用缓存的过程。</p>
+<p>   协商缓存生效：返回状态码304和Not Modified</p>
+<p>   协商缓存失效：返回状态码200和请求结果</p>
+<p>   流程：<br><img src="https://p1-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/b289541c222b446282e7da6ff9376435~tplv-k3u1fbpfcp-zoom-1.image" alt=""></p>
+<p>   <strong>强缓存与协商缓存的区别</strong></p>
+<p>   强缓存 ：本地有缓存则不再向服务器发送请求；</p>
+<p>   协商缓存 ：哪怕本地有缓存也要向服务器发送请求，检验资源文件是否有更改，如果有更改就从服务器获取最新资源且状态码为<strong>200</strong>，缓存到本地；如果没有更改，服务器什么都不返回且状态码为<strong>304</strong>，客户端从本地获取缓存信息。</p>
+<p>   <strong>缓存请求流程</strong></p>
+<p>   浏览器加载资源时，先根据请求头中的Expires和Cache-control来判断是否存在强缓存，如果存在强缓存则直接从缓存中获取并返回状态码304，如果不存在则需要向服务器发送请求，通过Last-Modified和ETag来判断资源是否被修改过或者更新过，如果没有被更新，则根据协商缓存304返回浏览器中的内容。如果强缓存和协商缓存都没有，则直接从服务器请求资源回来并返回状态码200。</p>
+<p>   看下图掌握整个缓存流程（偷来了好朋友画的图，O(∩_∩)O，可关注公众号【前端时光屋】学习前端知识）：<br><img src="https://p1-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/4e8f58c1e9a149068e8bf58ec8b4a221~tplv-k3u1fbpfcp-zoom-1.image" alt=""></p>
+<h3 id="3-DNS解析"><a href="#3-DNS解析" class="headerlink" title="3.DNS解析"></a>3.DNS解析</h3><p>   <strong>DNS解析就是根据浏览器识别出来的URL地址中的域名，到DNS服务器上查找服务器外网IP的过程</strong>。</p>
+<p>   <strong>【知识引申：DNS】</strong></p>
+<p>   <strong>DNS服务器，又称作域名解析服务器</strong>。在部署服务器后，服务器有一个外网IP地址，基于外网IP可以找到服务器。为什么要这样处理呢？因为外网IP一般不容易被记住，但是可以很容易记住域名。所以域名解析服务器DNS，也就是记录了域名主机地址（外网IP）相对应的记录信息。该过程也是有缓存的，一般浏览器解析过一次就会在本地记录一下解析记录。</p>
+<p>   DNS解析分为<strong>本地DNS服务器解析</strong>（通过递归实现）和<strong>根/顶级/权威域名服务器解析</strong>（通过迭代实现）。<br><img src="https://p1-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/1b8b5b59e00d4513aa4ff29ef35216f6~tplv-k3u1fbpfcp-zoom-1.image" alt=""></p>
+<p>   等到DNS解析完毕，拿到对应IP地址和端口，可以理解为和朋友约饭确认好了目的地以及要从目的地的哪个门口进入，这里目的地指的是IP地址，端口也就是哪个门。</p>
+<h3 id="4-TCP三次握手"><a href="#4-TCP三次握手" class="headerlink" title="4.TCP三次握手"></a>4.TCP三次握手</h3><p>   那么明确了IP地址和端口（饭店）后，接下来要做些什么呢？会有小伙伴大声的说出当然是出发前往目的地了。这样是不是有点草率？如果是一周前约定好的见面，今天天气不太好，如何保证约会没被取消都按时赴约呢？这就需要出发前 “联系” 。</p>
+<p>   …</p>
+<p>   我：”喂，今天还去xx饭店吃饭吗？”</p>
+<p>   朋友：”去呀去呀”</p>
+<p>   我：”好的，那就出发咯！”</p>
+<p>   …</p>
+<p>   这个过程也就是客户端向服务器发送HTTP请求，服务器处理请求。</p>
+<p>   那为什么不是两次或者四次呢？</p>
+<p>   两次模拟：</p>
+<p>   我：”喂，今天还去xx饭店吃饭吗？”</p>
+<p>   朋友：”去呀去呀”</p>
+<p>   我：”喂，今天还去xx饭店吃饭吗？”</p>
+<p>   朋友：”真是的，都和你说去呀去呀”</p>
+<p>   此后我没有接收到朋友的消息，就会继续重复。。</p>
+<p>   四次模拟：</p>
+<p>   我：”喂，今天还去xx饭店吃饭吗？”</p>
+<p>   朋友：”去呀去呀，xx饭店”</p>
+<p>   我：”好的，那就出发咯！还是xx饭店哈”</p>
+<p>   朋友：”…”</p>
+<h3 id="5-数据传输"><a href="#5-数据传输" class="headerlink" title="5.数据传输"></a>5.数据传输</h3><p>   保证了客户端和服务器端的正常通信连接后，接下来就是传输数据了。那么按照上面提到的例子，也就是A和B都可以按照约定出发了。</p>
+<h3 id="6-TCP四次挥手"><a href="#6-TCP四次挥手" class="headerlink" title="6.TCP四次挥手"></a>6.TCP四次挥手</h3><p>   为什么连接需要三次握手，关闭却是四次握手呢？</p>
+<p>   答：因为在关闭连接时，收到对方的报文信息仅仅表示对方不再发送数据了，但依然可以接收数据。所以可以在发送数据给对方后，在发送给对方来表示同意关闭连接。这就好比两人都到目的地了，A打电话说我到了，B说我也到了，在A接收到B也到达的信息后并不能算是见面，此时还不能够挂断电话。需要B说出他所在位置，等两人碰面后才能终止这次电话交谈。这么说是不是更容易理解了呢！</p>
+<p>   <strong>【引申】</strong></p>
+<p>   <strong>Connection:keep-alive</strong>  在第一次通信建立好连接通道后（TCP三次握手），服务器端和客户端不会主动关闭通道，这样下一次再发送请求就无需再次TCP三次握手了，节省了网络通信时间！</p>
+<p>   HTTP1.0中默认Connection并不是keep-alive，需要手动处理，但是从HTTP1.1之后Connection：keep-alive已经被列入了规范，现在基本上都是默认就是长链接的！【前提：同一个源，向不同源发送请求要重新建立通道】</p>
+<h3 id="7-页面渲染"><a href="#7-页面渲染" class="headerlink" title="7.页面渲染"></a>7.页面渲染</h3><p>（1）生成DOM TREE   =&gt;   处理HTML</p>
+<pre><code>- 基于HTTP获取的是流文件（进制编码）；    -----16进制
+
+- 把进制编码编译为具体的字符；   -----字符串
+
+- 按照Token进行解析（词法解析）；         -------startTag:html 等，此处token作为令牌，是词法解析的规则
+
+- 生成具体的节点（元素节点 / 文本节点...）；   -------标签
+
+- 按照相互嵌套的关系生成DOM树（节点树）；</code></pre><p>（2）生成CSSOM TREE   =&gt;  处理CSS</p>
+<pre><code>- 同DOM TREE类似，只是一个处理HTML，一个处理CSS</code></pre><p>（3）生成RENDER TREE（渲染树）；    </p>
+<pre><code>- DOM TREE + CSSOM TREE  = RENDER TREE
+- 对于开始设置为display：none样式的元素是不会在渲染树中生成的（开始加载页面时这些元素不进行渲染）；</code></pre><p>（4）布局 / 回流 / 重排 （Layout）；</p>
+<pre><code>- 按照渲染树计算出每个元素在视口中的位置和大小；</code></pre><p>（5）分层；  </p>
+<pre><code>- 按照计算出来的样式进行分层；
+  定位 / 设置透明度  RGBA / 设置滤镜 / 文本超过盒子大小时被裁切 
+
+- 单独计算每一层的绘制列表（具体怎么绘制）；
+
+-----------------------------------&gt;以上的操作都是交给 &quot;GUI渲染线程&quot; 来完成的</code></pre><p>（6）绘制 / 重绘（Painting）；</p>
+<pre><code>- 把生成的绘制列表提交给 &quot;合成线程&quot;；
+- &quot;合成线程&quot; 进行最后绘制，呈现在浏览器的页面上；</code></pre><p><img src="https://p6-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/264b4b71f9da4fa4b9ca1cffb7a1aa9a~tplv-k3u1fbpfcp-zoom-1.image" alt=""></p>
+<h2 id="优化手段"><a href="#优化手段" class="headerlink" title="优化手段"></a>优化手段</h2><p>网络优化是前端性能优化中的重点内容，因为大部分的消耗都发生在网络层，尤其是第一次页面加载。此时如何减少等待时间就显得格外重要！针对以上描述，可采取的性能优化有以下几点：</p>
+<ul>
+<li><p>缓存机制</p>
+<p>对于静态资源文件实现强缓存和协商缓存；</p>
+<p>对于不经常更新的接口数据采用<strong>本地存储</strong>做数据缓存，例如可以使用localStorage存储数据以及时间，当页面刷新时都先检验本地是否有数据以及存储的时间是否还在有效期，有效期自己设定，在有效期内直接从本地获取数据渲染，如果没有数据或者过期了重新发送请求，再把获取的最新结果重新存储。不使用cookie时因为只能存储4KB，而本地存储可以5MB；；</p>
+</li>
+<li><p>DNS优化</p>
+<p>由于每次DNS解析大概需要花费时间20~120ms，可以通过<strong><em>减少DNS请求次数</em></strong>来做优化，页面中尽可能少使用过多域名，资源信息尽可能发布到相同服务器上；<strong><em>分服务器部署</em></strong>，增加HTTP并发性（导致DNS解析变慢）；<strong><em>DNS预获取</em></strong>（DNS Prefetch）；</p>
+</li>
+<li><p>TCP的三次握手和四次挥手</p>
+<p><strong>Connection:keep-alive</strong></p>
+</li>
+<li><p>数据传输</p>
+<p><strong><em>减少输出传输的大小</em></strong>【内容或者数据压缩（webpack等），服务器端一定要开启GZIP压缩（一般能压缩60%左右），大批量数据分批次请求（下拉刷新或者分页，保证首次加载请求数据少）】；</p>
+<p><strong><em>减少HTTP请求的次数</em></strong>【资源文件合并处理，字体图标，雪碧图 CSS-Sprit，图片base64】；</p>
+</li>
+<li><p>CDN服务器 “地域分布式”</p>
+</li>
+<li><p>采用HTTP2.0</p>
+</li>
+</ul>
+<h2 id="HTTP1-0-amp-HTTP1-1-amp-HTTP2-0区别"><a href="#HTTP1-0-amp-HTTP1-1-amp-HTTP2-0区别" class="headerlink" title="HTTP1.0 &amp; HTTP1.1 &amp; HTTP2.0区别"></a>HTTP1.0 &amp; HTTP1.1 &amp; HTTP2.0区别</h2><p>由于本篇引申知识中多次提到HTTP1.0，HTTP1.1以及HTTP2.0，最后就来总结一下它们的差异。</p>
+<h3 id="HTTP1-0-和-HTTP1-1的区别"><a href="#HTTP1-0-和-HTTP1-1的区别" class="headerlink" title="HTTP1.0 和 HTTP1.1的区别"></a>HTTP1.0 和 HTTP1.1的区别</h3><ul>
+<li><code>缓存处理</code>，在HTTP1.0中主要使用If-Modified-Since,Expires来做为缓存判断的标准，HTTP1.1则引入了更多的缓存控制策略例如Entity tag，If-Unmodified-Since, If-Match, If-None-Match等更多可供选择的缓存头来控制缓存策略。</li>
+<li><code>带宽优化及网络连接的使用</code>，HTTP1.0中，存在一些浪费带宽的现象，例如客户端只是需要某个对象的一部分，而服务器却将整个对象送过来了，并且不支持断点续传功能，HTTP1.1则在请求头引入了range头域，它允许只请求资源的某个部分，即返回码是206（Partial Content），这样就方便了开发者自由的选择以便于充分利用带宽和连接。</li>
+<li><code>错误通知的管理</code>，在HTTP1.1中新增了24个错误状态响应码，如409（Conflict）表示请求的资源与资源的当前状态发生冲突；410（Gone）表示服务器上的某个资源被永久性的删除。</li>
+<li><code>Host头处理</code>，在HTTP1.0中认为每台服务器都绑定一个唯一的IP地址，因此，请求消息中的URL并没有传递主机名（hostname）。但随着虚拟主机技术的发展，在一台物理服务器上可以存在多个虚拟主机（Multi-homed Web Servers），并且它们共享一个IP地址。HTTP1.1的请求消息和响应消息都应支持Host头域，且请求消息中如果没有Host头域会报告一个错误（400 Bad Request）。</li>
+<li><code>长连接</code>，HTTP 1.1支持长连接（PersistentConnection）和请求的流水线（Pipelining）处理，在一个TCP连接上可以传送多个HTTP请求和响应，减少了建立和关闭连接的消耗和延迟，在HTTP1.1中默认开启Connection： keep-alive，一定程度上弥补了HTTP1.0每次请求都要创建连接的缺点。</li>
+</ul>
+<h3 id="HTTP2-0-和-HTTP1-x相比的新特性"><a href="#HTTP2-0-和-HTTP1-x相比的新特性" class="headerlink" title="HTTP2.0 和 HTTP1.x相比的新特性"></a>HTTP2.0 和 HTTP1.x相比的新特性</h3><ul>
+<li><code>新的二进制格式（Binary Format）</code>，HTTP1.x的解析是基于文本。基于文本协议的格式解析存在天然缺陷，文本的表现形式有多样性，要做到健壮性考虑的场景必然很多，二进制则不同，只认0和1的组合。基于这种考虑HTTP2.0的协议解析决定采用二进制格式，实现方便且健壮。</li>
+<li><code>多路复用（MultiPlexing）</code>，即连接共享，即每一个request都是是用作连接共享机制的。一个request对应一个id，这样一个连接上可以有多个request，每个连接的request可以随机的混杂在一起，接收方可以根据request的 id将request再归属到各自不同的服务端请求里面。</li>
+<li><code>header压缩</code>，如上文中所言，对前面提到过HTTP1.x的header带有大量信息，而且每次都要重复发送，HTTP2.0使用encoder来减少需要传输的header大小，通讯双方各自cache一份header fields表，既避免了重复header的传输，又减小了需要传输的大小。</li>
+<li><code>服务端推送（server push）</code>，例如我的网页有一个sytle.css的请求，在客户端收到sytle.css数据的同时，服务端会将sytle.js的文件推送给客户端，当客户端再次尝试获取sytle.js时就可以直接从缓存中获取到，不用再发请求了。</li>
+</ul>
+<h3 id="HTTP2-0的多路复用和HTTP1-X中的长连接复用的区别"><a href="#HTTP2-0的多路复用和HTTP1-X中的长连接复用的区别" class="headerlink" title="HTTP2.0的多路复用和HTTP1.X中的长连接复用的区别"></a>HTTP2.0的多路复用和HTTP1.X中的长连接复用的区别</h3><ul>
+<li>HTTP/1.* 一次请求-响应，建立一个连接，用完关闭；每一个请求都要建立一个连接；</li>
+<li>HTTP/1.1 一个连接通道只允许一个HTTP请求，上一个请求没有结束下一个请求是无法基于这个通道传输的。</li>
+<li>HTTP/2允许一个TCP通道中有多个HTTP请求，某个请求任务耗时严重，不会影响到其它连接的正常执行；</li>
+</ul>
+<p>希望大家看完都能有所收获，又是能量满满的一天！</p>
+</article><!-- lincense--><div class="post-paginator"><a class="prevSlogan" href="/2020/09/08/Vuex%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86%E6%A2%B3%E7%90%86/" title="Vuex基础知识梳理"><span>< PreviousPost</span><br><span class="prevTitle">Vuex基础知识梳理</span></a><a class="nextSlogan" href="/2020/09/04/%E5%AF%B9nextTick%E7%9A%84%E7%AE%80%E5%8D%95%E7%90%86%E8%A7%A3/" title="对nextTick的简单理解"><span>NextPost ></span><br><span class="nextTitle">对nextTick的简单理解</span></a><div class="clear"></div></div><div id="comment"></div></section></article><footer id="cxo-footer-outer"><div id="cxo-footer-inner"><p class="footer-container"><span>Site by </span><a href="http://hexo.io" target="_blank" rel="noopener"><span>Hexo</span></a><span> | theme </span><a href="https://github.com/Longlongyu/hexo-theme-Cxo" target="_blank" rel="noopener"><span>Cxo</span></a></p><i class="fa fa-user"> </i><span id="busuanzi_value_site_uv"></span><span> | </span><i class="fa fa-eye"> </i><span id="busuanzi_value_site_pv"></span></div></footer><!-- catelog--><div class="toc-wrapper" style="top: 70vh;"><div class="toc-catalog"><i class="fa fa-list"> </i><span>CATALOG</span></div><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#前言"><span class="toc-number">1.</span> <span class="toc-text">前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#从输入URL到页面展示，中间都发生了什么"><span class="toc-number">2.</span> <span class="toc-text">从输入URL到页面展示，中间都发生了什么?</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-URL解析"><span class="toc-number">2.1.</span> <span class="toc-text">1.URL解析</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-缓存检查"><span class="toc-number">2.2.</span> <span class="toc-text">2.缓存检查</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-DNS解析"><span class="toc-number">2.3.</span> <span class="toc-text">3.DNS解析</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-TCP三次握手"><span class="toc-number">2.4.</span> <span class="toc-text">4.TCP三次握手</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-数据传输"><span class="toc-number">2.5.</span> <span class="toc-text">5.数据传输</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#6-TCP四次挥手"><span class="toc-number">2.6.</span> <span class="toc-text">6.TCP四次挥手</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#7-页面渲染"><span class="toc-number">2.7.</span> <span class="toc-text">7.页面渲染</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#优化手段"><span class="toc-number">3.</span> <span class="toc-text">优化手段</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#HTTP1-0-amp-HTTP1-1-amp-HTTP2-0区别"><span class="toc-number">4.</span> <span class="toc-text">HTTP1.0 &amp; HTTP1.1 &amp; HTTP2.0区别</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#HTTP1-0-和-HTTP1-1的区别"><span class="toc-number">4.1.</span> <span class="toc-text">HTTP1.0 和 HTTP1.1的区别</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#HTTP2-0-和-HTTP1-x相比的新特性"><span class="toc-number">4.2.</span> <span class="toc-text">HTTP2.0 和 HTTP1.x相比的新特性</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#HTTP2-0的多路复用和HTTP1-X中的长连接复用的区别"><span class="toc-number">4.3.</span> <span class="toc-text">HTTP2.0的多路复用和HTTP1.X中的长连接复用的区别</span></a></li></ol></li></ol></div><!-- top--><i class="fa fa-arrow-up close" id="go-up" aria-hidden="true"></i></body></html>

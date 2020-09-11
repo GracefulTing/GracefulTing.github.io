@@ -1,0 +1,124 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"><meta name="author" content="GracefulTing"><meta name="renderer" content="webkit"><meta name="copyright" content="GracefulTing"><meta name="keywords" content="Welcome to GracefulTing's blog"><meta name="description" content=""><meta name="Cache-Control" content="no-cache"><meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"><title>常见跨域解决方案 · GracefulTing's Blog</title><link rel="stylesheet" href="/css/style.css?v=2018.7.9"><link rel="stylesheet" href="/css/animation.css?v=2018.7.9"><link rel="icon" href="/img/assets/favicon.ico"><link rel="stylesheet" href="https://cdn.bootcss.com/font-awesome/4.7.0/css/font-awesome.min.css?version=1.5.6"><!-- scripts--><script>(function( w ){
+  "use strict";
+  // rel=preload support test
+  if( !w.loadCSS ){
+    w.loadCSS = function(){};
+  }
+  // define on the loadCSS obj
+  var rp = loadCSS.relpreload = {};
+  // rel=preload feature support test
+  // runs once and returns a function for compat purposes
+  rp.support = (function(){
+    var ret;
+    try {
+      ret = w.document.createElement( "link" ).relList.supports( "preload" );
+    } catch (e) {
+      ret = false;
+    }
+    return function(){
+      return ret;
+    };
+  })();
+
+  // if preload isn't supported, get an asynchronous load by using a non-matching media attribute
+  // then change that media back to its intended value on load
+  rp.bindMediaToggle = function( link ){
+    // remember existing media attr for ultimate state, or default to 'all'
+    var finalMedia = link.media || "all";
+
+    function enableStylesheet(){
+      link.media = finalMedia;
+    }
+
+    // bind load handlers to enable media
+    if( link.addEventListener ){
+      link.addEventListener( "load", enableStylesheet );
+    } else if( link.attachEvent ){
+      link.attachEvent( "onload", enableStylesheet );
+    }
+
+    // Set rel and non-applicable media type to start an async request
+    // note: timeout allows this to happen async to let rendering continue in IE
+    setTimeout(function(){
+      link.rel = "stylesheet";
+      link.media = "only x";
+    });
+    // also enable media after 3 seconds,
+    // which will catch very old browsers (android 2.x, old firefox) that don't support onload on link
+    setTimeout( enableStylesheet, 3000 );
+  };
+
+  // loop through link elements in DOM
+  rp.poly = function(){
+    // double check this to prevent external calls from running
+    if( rp.support() ){
+      return;
+    }
+    var links = w.document.getElementsByTagName( "link" );
+    for( var i = 0; i < links.length; i++ ){
+      var link = links[ i ];
+      // qualify links to those with rel=preload and as=style attrs
+      if( link.rel === "preload" && link.getAttribute( "as" ) === "style" && !link.getAttribute( "data-loadcss" ) ){
+        // prevent rerunning on link
+        link.setAttribute( "data-loadcss", true );
+        // bind listeners to toggle media back
+        rp.bindMediaToggle( link );
+      }
+    }
+  };
+
+  // if unsupported, run the polyfill
+  if( !rp.support() ){
+    // run once at least
+    rp.poly();
+
+    // rerun poly on an interval until onload
+    var run = w.setInterval( rp.poly, 500 );
+    if( w.addEventListener ){
+      w.addEventListener( "load", function(){
+        rp.poly();
+        w.clearInterval( run );
+      } );
+    } else if( w.attachEvent ){
+      w.attachEvent( "onload", function(){
+        rp.poly();
+        w.clearInterval( run );
+      } );
+    }
+  }
+
+
+  // commonjs
+  if( typeof exports !== "undefined" ){
+    exports.loadCSS = loadCSS;
+  }
+  else {
+    w.loadCSS = loadCSS;
+  }
+}( typeof global !== "undefined" ? global : this ) );</script><script src="https://cdn.jsdelivr.net/npm/jquery@3.3.1/dist/jquery.min.js" defer></script><script src="/js/main.js?v=2018.7.9" defer></script><!-- fancybox--><link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.2.5/jquery.fancybox.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'"><script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.2.5/jquery.fancybox.min.js" defer></script><!-- busuanzi--><script async src="//dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script><meta name="generator" content="Hexo 4.2.1"></head><body><section class="profile-close" id="cxo-profile"><div class="profile-avatar"><i class="fa fa-caret-left"></i><img src="/img/assets/cat.png"></div><!--.profile-saying
+  i.fa.fa-comment
+  .saying--><div class="cxo-profile-inner"><div class="profile-name">Grace</div><div class="profile-signature">The harder, the more fortunate</div><div class="read-progress"></div></div></section><header id="cxo-intro" style="height: 70vh;background-image: url(/img/intro/index-bg.png);"><nav id="cxo-intro-nav"><section><div class="intro-nav-title"><a href="/">GracefulTing's Blog</a></div><div class="intro-nav-label-box"><a href="/">Home</a><a href="/about/">About</a><a href="/archives/">Archives</a><a href="/tags/">Tags</a></div><i class="fa fa-bars intro-nav-menu"><div class="intro-nav-drop"><a href="/">Home</a><a href="/about/">About</a><a href="/archives/">Archives</a><a href="/tags/">Tags</a></div></i><div class="clear"></div></section></nav><h1 class="post-title">常见跨域解决方案</h1><div class="post-intros"><div class="post-intro-meta"><span class="post-intro-time"><i class="post-intro-calendar fa fa-calendar"></i><span>2020-09-10</span></span></div></div></header><article class="cxo-up" id="cxo-content-outer"><section id="cxo-content-inner"><article class="article-entry" id="post"><h2 id="跨域"><a href="#跨域" class="headerlink" title="跨域"></a>跨域</h2><p>协议、域名、端口号，只要有一个不一样都是<strong>跨域请求</strong>，也叫<strong>非同源策略请求</strong>。</p>
+<h2 id="产生跨域的原因"><a href="#产生跨域的原因" class="headerlink" title="产生跨域的原因"></a>产生跨域的原因</h2><ul>
+<li>服务器分开部署：web服务器【静态资源文件处理】+数据服务器【处理数据接口的】；</li>
+<li>本地开发：本地项目调取测试服务器上的数据；</li>
+<li>调取第三方平台的接口；</li>
+</ul>
+<h2 id="跨域解决方案"><a href="#跨域解决方案" class="headerlink" title="跨域解决方案"></a>跨域解决方案</h2><h3 id="JSONP"><a href="#JSONP" class="headerlink" title="JSONP"></a>JSONP</h3><p><strong>原理</strong>：利用script标签不存在域的限制实现跨域请求，callback必须是一个全局上下文中的函数（防止不是全局的函数，我们需要把这个函数放到全局上）。</p>
+<p><img src="C:%5CUsers%5Cwf101%5CDesktop%5Cgit_project%5CGracefulTing.github.io%5Cmyblog%5Cpublic%5Cimg%5Cblog%5Cjs%5Cjsonp.png" alt=""></p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">jsonp</span>(<span class="params">url,callback</span>)</span>&#123;</span><br><span class="line">	<span class="comment">//把传递的回调函数挂载到全局</span></span><br><span class="line">    <span class="keyword">let</span> name = <span class="string">`jsonp<span class="subst">$&#123;<span class="keyword">new</span> <span class="built_in">Date</span>().getTime()&#125;</span>`</span>;</span><br><span class="line">    <span class="built_in">window</span>[name] = <span class="function"><span class="params">data</span> =&gt;</span> &#123;</span><br><span class="line">        <span class="comment">//从服务器获取到结果</span></span><br><span class="line">        <span class="built_in">document</span>.body.removeChild(script);</span><br><span class="line">        <span class="keyword">delete</span> <span class="built_in">window</span>[name];</span><br><span class="line">        callback &amp;&amp; callback(data);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//处理URL</span></span><br><span class="line">    url += <span class="string">`<span class="subst">$&#123;url.includes(<span class="string">'?'</span>)?<span class="string">'&amp;'</span>:<span class="string">'?'</span>&#125;</span>callback=<span class="subst">$&#123;name&#125;</span>`</span>;</span><br><span class="line">    <span class="comment">//发送请求</span></span><br><span class="line">    <span class="keyword">let</span> script = <span class="built_in">document</span>.createElement(<span class="string">'script'</span>);</span><br><span class="line">    script.src = url;</span><br><span class="line">    <span class="built_in">document</span>.body.appendChild(script);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">jsonp(url,result=&gt;&#123;</span><br><span class="line">    <span class="built_in">console</span>.log(result);</span><br><span class="line">&#125;)</span><br></pre></td></tr></table></figure>
+
+<h3 id="CORS"><a href="#CORS" class="headerlink" title="CORS"></a>CORS</h3><p>服务器端设置（设置允许源）</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">app.use(<span class="function">(<span class="params">req,res,next</span>)=&gt;</span>&#123;</span><br><span class="line">    <span class="comment">/* </span></span><br><span class="line"><span class="comment">      设置允许源</span></span><br><span class="line"><span class="comment">        * —— 允许所有源【不安全/不能携带资源凭证】</span></span><br><span class="line"><span class="comment">        设置单一源【安全/可以携带资源凭证/只能是单一一个源】</span></span><br><span class="line"><span class="comment">        可以动态设置多个源，每一次请求都会走这个中间件，先设置一个白名单，如果当前客户端请求的源在白名单中，把Allow-Origin动态设置为当前这个源</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    res.header(<span class="string">'Access-Control-Allow-Origin'</span>,*);   <span class="comment">//允许所有源</span></span><br><span class="line">    res.header(<span class="string">'Access-Control-Allow-Credentials'</span>,CREDENTIALS);</span><br><span class="line">    <span class="comment">//试探请求：在cors跨域请求中，首先浏览器会自己发送一个试探请求，验证是否可以和服务器跨域通信，服务器返回200，则浏览器继续发送真实的请求</span></span><br><span class="line">    res.method === <span class="string">'OPTIONS'</span>?res.send(<span class="string">'CURRENT SERVICES SUPPORT CROSS DOMAIN REQUESTS!'</span>):next();</span><br><span class="line">&#125;)</span><br></pre></td></tr></table></figure>
+
+<h3 id="Proxy"><a href="#Proxy" class="headerlink" title="Proxy"></a>Proxy</h3><p><strong>原理</strong>【node中间层代理/node分发】</p>
+<p>客户端端口：3000      服务器端：1001</p>
+<p>基于webpack-dev-server在本地基于node.js创建了一个叫做3000的web服务。客户端向node发起请求，node服务代理到服务器端，从服务器端拿到结果后再返回到客户端。</p>
+<p>基于node发送请求不存在跨域，后台分发不存在跨域。</p>
+<p>如果是自己实现node服务层代理：不论是开发环境还是生产环境都可以处理（node中间层和客户端是同源，中间层帮我们去服务器请求数据，再把数据返回给客户端）。但是dev-server不行，它是webpack的一个插件，只能在开发环境下使用，生产环境下需要我们自己基于nginx反向代理处理。</p>
+<p>devServer配置：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 它支持webPack-dev-server的所有选项</span></span><br><span class="line">devServer: &#123;</span><br><span class="line">    host: <span class="string">"localhost"</span>,</span><br><span class="line">    port: <span class="number">4200</span>, <span class="comment">// 端口号8081</span></span><br><span class="line">    https: <span class="literal">false</span>, <span class="comment">// https:&#123;type:Boolean&#125;</span></span><br><span class="line">    open: <span class="literal">false</span>, <span class="comment">//配置自动启动浏览器</span></span><br><span class="line">    <span class="comment">// 配置多个代理</span></span><br><span class="line">    proxy: &#123;</span><br><span class="line">      <span class="string">"/api"</span>: &#123;</span><br><span class="line">        target: process.env.VUE_APP_BASEURL,</span><br><span class="line">        ws: <span class="literal">true</span>,</span><br><span class="line">        changeOrigin: <span class="literal">true</span>,</span><br><span class="line">        pathRewrite: &#123;</span><br><span class="line">          <span class="string">'^/api'</span>: <span class="string">''</span></span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>nginx反向代理：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">server&#123;</span><br><span class="line">	listen   80;</span><br><span class="line">	server_name   192.168.161.1;</span><br><span class="line">	location &#x2F;&#123;</span><br><span class="line">		proxy_pass http:&#x2F;&#x2F;192.168.161.1:8080;</span><br><span class="line">		root   html;</span><br><span class="line">		index  index.html  index.htm;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+</article><!-- lincense--><div class="post-paginator"><a class="prevSlogan" href="/2020/09/11/%E6%95%B0%E7%BB%84%E5%B8%B8%E7%94%A8api%E5%8E%9F%E7%90%86%E5%92%8C%E5%AE%9E%E7%8E%B0/" title="数组常用api原理和实现"><span>< PreviousPost</span><br><span class="prevTitle">数组常用api原理和实现</span></a><a class="nextSlogan" href="/2020/09/08/Vuex%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86%E6%A2%B3%E7%90%86/" title="Vuex基础知识梳理"><span>NextPost ></span><br><span class="nextTitle">Vuex基础知识梳理</span></a><div class="clear"></div></div><div id="comment"></div></section></article><footer id="cxo-footer-outer"><div id="cxo-footer-inner"><p class="footer-container"><span>Site by </span><a href="http://hexo.io" target="_blank" rel="noopener"><span>Hexo</span></a><span> | theme </span><a href="https://github.com/Longlongyu/hexo-theme-Cxo" target="_blank" rel="noopener"><span>Cxo</span></a></p><i class="fa fa-user"> </i><span id="busuanzi_value_site_uv"></span><span> | </span><i class="fa fa-eye"> </i><span id="busuanzi_value_site_pv"></span></div></footer><!-- catelog--><div class="toc-wrapper" style="top: 70vh;"><div class="toc-catalog"><i class="fa fa-list"> </i><span>CATALOG</span></div><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#跨域"><span class="toc-number">1.</span> <span class="toc-text">跨域</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#产生跨域的原因"><span class="toc-number">2.</span> <span class="toc-text">产生跨域的原因</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#跨域解决方案"><span class="toc-number">3.</span> <span class="toc-text">跨域解决方案</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#JSONP"><span class="toc-number">3.1.</span> <span class="toc-text">JSONP</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#CORS"><span class="toc-number">3.2.</span> <span class="toc-text">CORS</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Proxy"><span class="toc-number">3.3.</span> <span class="toc-text">Proxy</span></a></li></ol></li></ol></div><!-- top--><i class="fa fa-arrow-up close" id="go-up" aria-hidden="true"></i></body></html>
