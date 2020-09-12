@@ -109,7 +109,19 @@ Arr ...</div><div class="read-more"><a class="more" href="/2020/09/11/%E6%95%B0%
 
 跨域解决方案JSONP原理：利用script标签不存在域的限制实现跨域请求，callback必须是一个全局上下文中的函数（防止不是全局的函数，我们需要把这个函数放到全局上）。
 
-1234567891011121314151617181920function jsonp(url,callback)&#123;	//把传递的回调函数挂载到全局    let  ...</div><div class="read-more"><a class="more" href="/2020/09/10/%E5%B8%B8%E8%A7%81%E8%B7%A8%E5%9F%9F%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88/#more">ReadMore</a></div><hr></div><div class="recent-post-item"><div class="post-title"><a href="/2020/09/08/Vuex%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86%E6%A2%B3%E7%90%86/">Vuex基础知识梳理</a></div><div class="post-time"><i class="fa fa-table"></i><time datetime="2020-09-08T13:58:18.600Z">2020-09-08</time></div><div class="recent-post-content">学习和使用Vue，必不可少的就要用到Vuex，本篇侧重梳理vuex相关知识和常见面试题，希望读完这篇可以给你带来收获和帮助！
+1234567891011121314151617181920function jsonp(url,callback)&#123;	//把传递的回调函数挂载到全局    let  ...</div><div class="read-more"><a class="more" href="/2020/09/10/%E5%B8%B8%E8%A7%81%E8%B7%A8%E5%9F%9F%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88/#more">ReadMore</a></div><hr></div><div class="recent-post-item"><div class="post-title"><a href="/2020/09/09/JS%E9%AB%98%E9%A2%91%E6%89%8B%E5%86%99%E4%BB%A3%E7%A0%81%E7%B3%BB%E5%88%97%E9%A2%98/">JS高频手写代码系列题</a></div><div class="post-time"><i class="fa fa-table"></i><time datetime="2020-09-09T06:39:47.591Z">2020-09-09</time></div><div class="recent-post-content">手动实现浅克隆浅克隆：只拷贝对象或者数组的第一层内容；
+123456789101112131415161718192021222324252627282930/* * 对象浅克隆： *    1.Object.assign *    2.&#123;...obj&#125;：展开运算符，也只能展开第一级 */let obj = &#123;    a:100,    b:[10,20],    c:&#123;        x:1    &#125;,    d:/^\d+$/&#125;let newObj = Object.assign(&#123;&#125;,obj);let new ...</div><div class="read-more"><a class="more" href="/2020/09/09/JS%E9%AB%98%E9%A2%91%E6%89%8B%E5%86%99%E4%BB%A3%E7%A0%81%E7%B3%BB%E5%88%97%E9%A2%98/#more">ReadMore</a></div><hr></div><div class="recent-post-item"><div class="post-title"><a href="/2020/09/09/%E3%80%90%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E3%80%91%E7%BA%AF%E5%B9%B2%E8%B4%A7-%E7%B3%BB%E7%BB%9F%E6%A2%B3%E7%90%86%E5%B8%B8%E8%80%83%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/">【数据结构】纯干货-系统梳理常考数据结构</a></div><div class="post-time"><i class="fa fa-table"></i><time datetime="2020-09-09T02:30:58.378Z">2020-09-09</time></div><div class="recent-post-content">前言本文梳理了常见的几种数据结构，针对人群为数据结构入门和系统复习数据结构的小伙伴们！小编从各数据结构的定义、特点、使用场景和方法实现，以及最后附上Leecode中一道相关练习题，帮助大家来更好地掌握对应知识。如果你有这个需求，快来快来~
+
+栈特点
+它是一个后进先出(LIFO)的数据结构。按照字面意思就是先进去的后出去，后进去的先出来。联想一下身边这样的事例其实有很多，比如：
+
+煤炉中，最先放进的蜂窝煤在最底部，最后才被取出，而最后放进去的蜂窝煤是在最上面，也是最先被取出的；
+
+收纳箱中的衣服，最先叠放进去的最后取出来；
+……
+
+
+在我们JS中是没有栈这个数据结构的，那么要想在JS中实现栈的功 ...</div><div class="read-more"><a class="more" href="/2020/09/09/%E3%80%90%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E3%80%91%E7%BA%AF%E5%B9%B2%E8%B4%A7-%E7%B3%BB%E7%BB%9F%E6%A2%B3%E7%90%86%E5%B8%B8%E8%80%83%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/#more">ReadMore</a></div><hr></div><div class="recent-post-item"><div class="post-title"><a href="/2020/09/08/Vuex%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86%E6%A2%B3%E7%90%86/">Vuex基础知识梳理</a></div><div class="post-time"><i class="fa fa-table"></i><time datetime="2020-09-08T13:58:18.600Z">2020-09-08</time></div><div class="recent-post-content">学习和使用Vue，必不可少的就要用到Vuex，本篇侧重梳理vuex相关知识和常见面试题，希望读完这篇可以给你带来收获和帮助！
 Vuex是什么？
 Vuex 是一个专为 Vue.js 应用程序开发的状态管理模式。它采用集中式存储管理应用的所有组件的状态，并以相应的规则保证状态以一种可预测的方式发生变化。
 
@@ -154,12 +166,4 @@ proxy
 优势：
 
 有利于SEO优化，页面源代码种可以看到所有动态绑定的内容；
-如果服务器抗压能力很强（含处理速度快），则页面渲染速度很快 ...</div><div class="read-more"><a class="more" href="/2020/08/09/axios%E5%B0%81%E8%A3%85/#more">ReadMore</a></div><hr></div><div class="recent-post-item"><div class="post-title"><a href="/2020/08/09/%E5%9B%BE%E7%89%87%E6%87%92%E5%8A%A0%E8%BD%BD/">图片懒加载</a></div><div class="post-time"><i class="fa fa-table"></i><time datetime="2020-08-09T01:48:49.742Z">2020-08-09</time></div><div class="recent-post-content">图片懒加载的意义：虽然当代浏览器在渲染DOM树的时候，遇到img并不会阻碍DOM树的渲染（浏览器会开辟HTTP线程请求图片资源文件），但是在生成RENDER TREE后，浏览器进行渲染的时候，会把渲染树和图片一起进行绘制。遇到一些影响性能（影响页面第一次加载的速度）问题：
-
-如果请求的图片资源过多，我们同时可以开辟的HTTP线程只有6个，这样图片资源预先的加载，会影响其他资源的请求速度
-第一次绘制页面的时候，如果开始绘制图片，也需要消耗很多的时间，这样也影响页面第一次打开的速度…….
-
-所以对于这种情况：
-
-我们一般都采用图片懒加载（开始需要展示图片的位置，我们基于默认图或者一个空白的盒子占位 ...</div><div class="read-more"><a class="more" href="/2020/08/09/%E5%9B%BE%E7%89%87%E6%87%92%E5%8A%A0%E8%BD%BD/#more">ReadMore</a></div><hr></div><div class="recent-post-item"><div class="post-title"><a href="/2020/08/07/Promise%20A+/">Promise A+</a></div><div class="post-time"><i class="fa fa-table"></i><time datetime="2020-08-07T12:36:05.792Z">2020-08-07</time></div><div class="recent-post-content">Promise A+
-123456789101112131415161718192021222324252627282930313233343536373839404142434445464748495051525354555657585960616263646566676869707172737475767778798081828384858687888990919293949596979899100101102103104105106107108109110111112113114115116117118119120121122123124125126(function () &#123; ...</div><div class="read-more"><a class="more" href="/2020/08/07/Promise%20A+/#more">ReadMore</a></div><hr></div></section><nav class="cxo-page-nav"><span class="page-number current">1</span><a class="page-number" href="/page/2/">2</a><a class="page-number" href="/page/3/">3</a><a class="page-number" href="/page/4/">4</a><a class="extend next" rel="next" href="/page/2/">NEXT &amp;#62;</a></nav></section></article><footer id="cxo-footer-outer"><div id="cxo-footer-inner"><p class="footer-container"><span>Site by </span><a href="http://hexo.io" target="_blank" rel="noopener"><span>Hexo</span></a><span> | theme </span><a href="https://github.com/Longlongyu/hexo-theme-Cxo" target="_blank" rel="noopener"><span>Cxo</span></a></p><i class="fa fa-user"> </i><span id="busuanzi_value_site_uv"></span><span> | </span><i class="fa fa-eye"> </i><span id="busuanzi_value_site_pv"></span></div></footer><!-- catelog--><!-- top--><i class="fa fa-arrow-up close" id="go-up" aria-hidden="true"></i></body></html>
+如果服务器抗压能力很强（含处理速度快），则页面渲染速度很快 ...</div><div class="read-more"><a class="more" href="/2020/08/09/axios%E5%B0%81%E8%A3%85/#more">ReadMore</a></div><hr></div></section><nav class="cxo-page-nav"><span class="page-number current">1</span><a class="page-number" href="/page/2/">2</a><a class="page-number" href="/page/3/">3</a><a class="page-number" href="/page/4/">4</a><a class="extend next" rel="next" href="/page/2/">NEXT &amp;#62;</a></nav></section></article><footer id="cxo-footer-outer"><div id="cxo-footer-inner"><p class="footer-container"><span>Site by </span><a href="http://hexo.io" target="_blank" rel="noopener"><span>Hexo</span></a><span> | theme </span><a href="https://github.com/Longlongyu/hexo-theme-Cxo" target="_blank" rel="noopener"><span>Cxo</span></a></p><i class="fa fa-user"> </i><span id="busuanzi_value_site_uv"></span><span> | </span><i class="fa fa-eye"> </i><span id="busuanzi_value_site_pv"></span></div></footer><!-- catelog--><!-- top--><i class="fa fa-arrow-up close" id="go-up" aria-hidden="true"></i></body></html>

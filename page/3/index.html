@@ -97,7 +97,30 @@
   }
 }( typeof global !== "undefined" ? global : this ) );</script><script src="https://cdn.jsdelivr.net/npm/jquery@3.3.1/dist/jquery.min.js" defer></script><script src="/js/main.js?v=2018.7.9" defer></script><!-- fancybox--><link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.2.5/jquery.fancybox.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'"><script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.2.5/jquery.fancybox.min.js" defer></script><!-- busuanzi--><script async src="//dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script><meta name="generator" content="Hexo 4.2.1"></head><body><section class="profile-close" id="cxo-profile"><div class="profile-avatar"><i class="fa fa-caret-left"></i><img src="/img/assets/cat.png"></div><!--.profile-saying
   i.fa.fa-comment
-  .saying--><div class="cxo-profile-inner"><div class="profile-name">Grace</div><div class="profile-signature">The harder, the more fortunate</div><div class="read-progress"></div></div></section><header id="cxo-intro" style="height: 70vh;background-image: url(/img/intro/index-bg.png);"><nav id="cxo-intro-nav"><section><div class="intro-nav-title"><a href="/">GracefulTing's Blog</a></div><div class="intro-nav-label-box"><a href="/">Home</a><a href="/about/">About</a><a href="/archives/">Archives</a><a href="/tags/">Tags</a></div><i class="fa fa-bars intro-nav-menu"><div class="intro-nav-drop"><a href="/">Home</a><a href="/about/">About</a><a href="/archives/">Archives</a><a href="/tags/">Tags</a></div></i><div class="clear"></div></section></nav><h1>GracefulTing's Blog</h1><h5>Welcome to my Blog!</h5><div class="intro-social"><a class="fa fa-github" href="//github.com/" target="_blank" title="github"></a><a class="fa fa-weibo" href="//www.weibo.com" target="_blank" title="weibo"></a><a class="fa fa-facebook" href="//www.facebook.com" target="_blank" title="facebook"></a><a class="fa fa-twitter" href="//twitter.com" target="_blank" title="twitter"></a><a class="fa fa-rss" href="/atom.xml" target="_blank" title="rss"></a></div></header><article class="cxo-up" id="cxo-content-outer"><section id="cxo-content-inner"><section id="recent-posts"><div class="recent-post-item"><div class="post-title"><a href="/2020/07/19/JQ%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB/">JQ源码解读</a></div><div class="post-time"><i class="fa fa-table"></i><time datetime="2020-07-19T01:59:30.497Z">2020-07-19</time></div><div class="recent-post-content">闭包源码解读1234567typeof window != 'undefined' ? window : this;/*区分浏览器环境和NODE环境:浏览器端运行传参：windowNODE环境传参：global或者一个模块*/
+  .saying--><div class="cxo-profile-inner"><div class="profile-name">Grace</div><div class="profile-signature">The harder, the more fortunate</div><div class="read-progress"></div></div></section><header id="cxo-intro" style="height: 70vh;background-image: url(/img/intro/index-bg.png);"><nav id="cxo-intro-nav"><section><div class="intro-nav-title"><a href="/">GracefulTing's Blog</a></div><div class="intro-nav-label-box"><a href="/">Home</a><a href="/about/">About</a><a href="/archives/">Archives</a><a href="/tags/">Tags</a></div><i class="fa fa-bars intro-nav-menu"><div class="intro-nav-drop"><a href="/">Home</a><a href="/about/">About</a><a href="/archives/">Archives</a><a href="/tags/">Tags</a></div></i><div class="clear"></div></section></nav><h1>GracefulTing's Blog</h1><h5>Welcome to my Blog!</h5><div class="intro-social"><a class="fa fa-github" href="//github.com/" target="_blank" title="github"></a><a class="fa fa-weibo" href="//www.weibo.com" target="_blank" title="weibo"></a><a class="fa fa-facebook" href="//www.facebook.com" target="_blank" title="facebook"></a><a class="fa fa-twitter" href="//twitter.com" target="_blank" title="twitter"></a><a class="fa fa-rss" href="/atom.xml" target="_blank" title="rss"></a></div></header><article class="cxo-up" id="cxo-content-outer"><section id="cxo-content-inner"><section id="recent-posts"><div class="recent-post-item"><div class="post-title"><a href="/2020/07/19/JS%E9%AB%98%E9%98%B6%E7%BC%96%E7%A8%8B/">JS高阶编程</a></div><div class="post-time"><i class="fa fa-table"></i><time datetime="2020-07-19T13:22:43.542Z">2020-07-19</time></div><div class="recent-post-content">高阶函数以下两个条件，满足一个就是高阶函数：
+
+给一个函数传入一个函数，也就是回调；
+一个函数返回一个函数；
+
+闭包：定义函数的作用域和调用的作用域不是同一个。
+单例设计模式
+概念：用单独的实例来管理当前事务的相关特征（属性和方法），类似于实现一个分组的特点，而此时obj1和obj2不仅仅叫做一个对象，也被称为命名空间。
+
+基于闭包管控的单例模式称为：高级单例模式，以此来实现早期的模块划分（最早的模块化思想）；
+12345678let module = (function()&#123;    function query()&#123;&#125;    function tools()&# ...</div><div class="read-more"><a class="more" href="/2020/07/19/JS%E9%AB%98%E9%98%B6%E7%BC%96%E7%A8%8B/#more">ReadMore</a></div><hr></div><div class="recent-post-item"><div class="post-title"><a href="/2020/07/19/%E9%9D%A2%E5%90%91%E5%AF%B9%E8%B1%A1%E7%BC%96%E7%A8%8B/">面向对象编程</a></div><div class="post-time"><i class="fa fa-table"></i><time datetime="2020-07-19T06:16:45.381Z">2020-07-19</time></div><div class="recent-post-content">面向对象编程（OOP）html是标记语言
+对象：一种泛指，js中万物皆对象
+类：对象的一种细分
+实例：某一个类别中具体的事物
+具备Symbol(Symbol.iterator)属性的，说明它是可被迭代的数据结构 =&gt; 可以用ES6中的for of循环。
+构造函数构造函数相比普通函数的区别：
+
+构造函数执行，也具备普通函数执行的一面（也会像普通函数一样去执行）；
+
+new函数执行的特殊性：
+
+私有上下文中要做的第一件事情是 “ 创建一个空对象【是当前类的实例对象】 “；———-开辟堆内存AF0
+
+初始化this时，让上下文中的this指向创建的实例对象；———&gt; this执行堆地址A ...</div><div class="read-more"><a class="more" href="/2020/07/19/%E9%9D%A2%E5%90%91%E5%AF%B9%E8%B1%A1%E7%BC%96%E7%A8%8B/#more">ReadMore</a></div><hr></div><div class="recent-post-item"><div class="post-title"><a href="/2020/07/19/JQ%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB/">JQ源码解读</a></div><div class="post-time"><i class="fa fa-table"></i><time datetime="2020-07-19T01:59:30.497Z">2020-07-19</time></div><div class="recent-post-content">闭包源码解读1234567typeof window != 'undefined' ? window : this;/*区分浏览器环境和NODE环境:浏览器端运行传参：windowNODE环境传参：global或者一个模块*/
 
 思想：
 
@@ -168,25 +191,4 @@ var obj={…}   //变量提升阶段只是声明obj，并没有开辟堆内存�
 总结：自执行函数不存在变量提升。因为自执行函数是匿名函数，所以无法在所在上下文中变量提升。匿名函数具名化后的名字也只能在函数内部中使用。
 匿名函数具名化（设置了名字）：
 
-设置的名字只能在函数内部使用，外部无法使用（基于这种方式代替严格模式下不兼容的argument ...</div><div class="read-more"><a class="more" href="/2020/06/30/%E5%85%B3%E4%BA%8E%E5%8F%98%E9%87%8F%E6%8F%90%E5%8D%87%EF%BC%8C%E4%BD%A0%E7%9F%A5%E9%81%93%E5%A4%9A%E5%B0%91%EF%BC%9F/#more">ReadMore</a></div><hr></div><div class="recent-post-item"><div class="post-title"><a href="/2020/06/27/%E9%97%AD%E5%8C%85/">闭包</a></div><div class="post-time"><i class="fa fa-table"></i><time datetime="2020-06-27T15:13:14.387Z">2020-06-27</time></div><div class="recent-post-content">闭包闭包是函数运行时产生的机制，函数执行会形成一个全新的私有上下文，可以保护里面的私有变量和外界互不干扰（保护机制），但是大家认为的闭包需要当前上下文不能被出栈释放，这样私有变量及它的值也不会被释放掉（保存机制）。
-
-从性能角度讲，项目中应该减少对闭包的使用（因为闭包会产生不释放的栈内存，过多使用容易导致内存溢出或者降低性能）
-问：闭包好不好？
-答：大量应用闭包肯定会导致内存的消耗，但是闭包保护和保存作用，在真实开发中还是需要的，所以要合理使用。
-作用：
-
-保护（私有变量和外界没有必然联系）
-保存（形成不销毁的栈内存，里面的私有变量等信息保存下来了）
-
-闭包的应用：ECStack / EC / ...</div><div class="read-more"><a class="more" href="/2020/06/27/%E9%97%AD%E5%8C%85/#more">ReadMore</a></div><hr></div><div class="recent-post-item"><div class="post-title"><a href="/2020/06/27/%E5%86%85%E5%AD%98%E9%87%8A%E6%94%BE%E9%97%AE%E9%A2%98/">内存释放问题</a></div><div class="post-time"><i class="fa fa-table"></i><time datetime="2020-06-27T15:13:14.382Z">2020-06-27</time></div><div class="recent-post-content">堆内存释放问题创建一个引用类型值，就会产生一个堆内存。
-如果当前创建的堆内存不被其他东西占用了，浏览器会在空闲时查找每一个内存的引用情况，不被占用的都会被回收释放掉。
-1234let obj = &#123;	age:18&#125;let oop = obj;
-
-此时obj和oop都占用了对象的堆内存，想要释放堆内存，需要手动解除变量盒值的关联（null——空对象指针）
-12obj = null;oop = null;
-
-浏览器的垃圾回收机制：
-
-引用计数（以IE为主）：在某些情况下会导致计数混乱，这样会造成内存不能被释放（内存泄漏）
-
-检测引用（占用）（以谷歌为主）：浏览器在空闲时会依次检 ...</div><div class="read-more"><a class="more" href="/2020/06/27/%E5%86%85%E5%AD%98%E9%87%8A%E6%94%BE%E9%97%AE%E9%A2%98/#more">ReadMore</a></div><hr></div></section><nav class="cxo-page-nav"><a class="extend prev" rel="prev" href="/page/2/">&amp;#60; PREV</a><a class="page-number" href="/">1</a><a class="page-number" href="/page/2/">2</a><span class="page-number current">3</span><a class="page-number" href="/page/4/">4</a><a class="extend next" rel="next" href="/page/4/">NEXT &amp;#62;</a></nav></section></article><footer id="cxo-footer-outer"><div id="cxo-footer-inner"><p class="footer-container"><span>Site by </span><a href="http://hexo.io" target="_blank" rel="noopener"><span>Hexo</span></a><span> | theme </span><a href="https://github.com/Longlongyu/hexo-theme-Cxo" target="_blank" rel="noopener"><span>Cxo</span></a></p><i class="fa fa-user"> </i><span id="busuanzi_value_site_uv"></span><span> | </span><i class="fa fa-eye"> </i><span id="busuanzi_value_site_pv"></span></div></footer><!-- catelog--><!-- top--><i class="fa fa-arrow-up close" id="go-up" aria-hidden="true"></i></body></html>
+设置的名字只能在函数内部使用，外部无法使用（基于这种方式代替严格模式下不兼容的argument ...</div><div class="read-more"><a class="more" href="/2020/06/30/%E5%85%B3%E4%BA%8E%E5%8F%98%E9%87%8F%E6%8F%90%E5%8D%87%EF%BC%8C%E4%BD%A0%E7%9F%A5%E9%81%93%E5%A4%9A%E5%B0%91%EF%BC%9F/#more">ReadMore</a></div><hr></div></section><nav class="cxo-page-nav"><a class="extend prev" rel="prev" href="/page/2/">&amp;#60; PREV</a><a class="page-number" href="/">1</a><a class="page-number" href="/page/2/">2</a><span class="page-number current">3</span><a class="page-number" href="/page/4/">4</a><a class="extend next" rel="next" href="/page/4/">NEXT &amp;#62;</a></nav></section></article><footer id="cxo-footer-outer"><div id="cxo-footer-inner"><p class="footer-container"><span>Site by </span><a href="http://hexo.io" target="_blank" rel="noopener"><span>Hexo</span></a><span> | theme </span><a href="https://github.com/Longlongyu/hexo-theme-Cxo" target="_blank" rel="noopener"><span>Cxo</span></a></p><i class="fa fa-user"> </i><span id="busuanzi_value_site_uv"></span><span> | </span><i class="fa fa-eye"> </i><span id="busuanzi_value_site_pv"></span></div></footer><!-- catelog--><!-- top--><i class="fa fa-arrow-up close" id="go-up" aria-hidden="true"></i></body></html>
